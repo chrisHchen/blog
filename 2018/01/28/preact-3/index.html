@@ -5,15 +5,20 @@
   
 
   
-  <title></title>
+  <title>preact 源码(3) | </title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title">
-<meta property="og:url" content="https://chrishchen.github.io/blog/index.html">
+  <meta name="description" content="render.js  Preact.render 方法将 component 树挂载到 DOM 节点, 类似 ReactDOM.render。123export function render(vnode, parent, merge) &amp;#123;  return diff(merge, vnode, &amp;#123;&amp;#125;, false, parent, false);&amp;#125; 前两个参">
+<meta name="keywords" content="preact(v8.2.7)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="preact 源码(3)">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/01/28/preact-3/index.html">
 <meta property="og:site_name">
+<meta property="og:description" content="render.js  Preact.render 方法将 component 树挂载到 DOM 节点, 类似 ReactDOM.render。123export function render(vnode, parent, merge) &amp;#123;  return diff(merge, vnode, &amp;#123;&amp;#125;, false, parent, false);&amp;#125; 前两个参">
 <meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2018-01-28T09:59:21.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title">
+<meta name="twitter:title" content="preact 源码(3)">
+<meta name="twitter:description" content="render.js  Preact.render 方法将 component 树挂载到 DOM 节点, 类似 ReactDOM.render。123export function render(vnode, parent, merge) &amp;#123;  return diff(merge, vnode, &amp;#123;&amp;#125;, false, parent, false);&amp;#125; 前两个参">
   
     <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
   
@@ -60,9 +65,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-preact-3" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-preact-3" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/blog/2018/01/28/preact-3/" class="article-date">
   <time datetime="2018-01-28T02:20:18.000Z" itemprop="datePublished">2018-01-28</time>
@@ -75,8 +78,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/01/28/preact-3/">preact 源码(3)</a>
+    <h1 class="article-title" itemprop="name">
+      preact 源码(3)
     </h1>
   
 
@@ -130,106 +133,19 @@
     </footer>
   </div>
   
-</article>
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-preact-2" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/01/21/preact-2/" class="article-date">
-  <time datetime="2018-01-21T14:20:18.000Z" itemprop="datePublished">2018-01-21</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
-    </h1>
+    <a href="/blog/2018/01/21/preact-2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">preact 源码(2)</div>
+    </a>
   
+</nav>
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>component.js 所有组件的基类</strong></p>
-<p>成员方法 setState<br>preact 和 react 在实现 setState 上有一些不同:<br>从源码可以看出 preact 的 setState 是同步变化 state 的</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setState(state, callback) &#123;</span><br><span class="line">  <span class="keyword">let</span> s = <span class="keyword">this</span>.state;</span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.prevState) <span class="keyword">this</span>.prevState = extend(&#123;&#125;, s);</span><br><span class="line">  extend(s, <span class="keyword">typeof</span> state===<span class="string">'function'</span> ? state(s, <span class="keyword">this</span>.props) : state);</span><br><span class="line">  <span class="keyword">if</span> (callback) (<span class="keyword">this</span>._renderCallbacks = (<span class="keyword">this</span>._renderCallbacks || [])).push(callback);</span><br><span class="line">  enqueueRender(<span class="keyword">this</span>);</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
-<p>但 react 的 setState 是一个异步调用:</p>
-<p>如下代码分别用 react 和 preact 执行，可发现明显差异：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">state = &#123;</span><br><span class="line">  word: <span class="string">'hello'</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// react</span></span><br><span class="line">mutate = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">this</span>.setState(&#123;</span><br><span class="line">    word: <span class="string">`<span class="subst">$&#123;<span class="keyword">this</span>.state.word&#125;</span> world`</span></span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="keyword">this</span>.state.word) <span class="comment">// 此处打印 hello</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//preact</span></span><br><span class="line">mutate = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">this</span>.setState(&#123;</span><br><span class="line">    word: <span class="string">`<span class="subst">$&#123;<span class="keyword">this</span>.state.word&#125;</span> world`</span></span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="keyword">this</span>.state.word) <span class="comment">// 此处打印 hello world</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p><strong>render-queue.js: batch component update</strong><br>调用 setState 方法并不会马上更新组件。Preact 通过 enqueueRender 方法，将更新操作缓存起来，在下一个事件周期做批量更新。这里的策略是先将 component 实例标记为 dirty， 然后将其推入 items 数组，通过 <code>util.defer</code> 方法在下个事件周期通过 renderComponent 方法批量更新 component 实例。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/21/preact-2/" data-id="cjcovqmba0002xqemcheegy10" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
-
-    </footer>
-  </div>
   
 </article>
-
-
-  
-    <article id="post-preact-1" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/01/20/preact-1/" class="article-date">
-  <time datetime="2018-01-20T13:59:43.000Z" itemprop="datePublished">2018-01-20</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><a href="https://preactjs.com/" target="_blank" rel="noopener">Preact</a> 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。</p>
-<p>Preact 整个项目是用 rollup 来构建，构建的配置文件在 <code>config/rollup.config.js</code>, 入口文件是 <code>src/preact.js</code></p>
-<p><strong>jsx 与 createElement/h</strong><br>看 createElement 函数前有必要先了解下 jsx。 这篇文章<a href="http://jasonformat.com/wtf-is-jsx" target="_blank" rel="noopener">(wtf-is-jsx)</a>非常好的解释了什么是 jsx 以及 jsx 如何转化为 vnode!</p>
-<p>比如 <code>&lt;div id=&quot;foo&quot; name=&quot;bar&quot;&gt;Hello!&lt;/div&gt;</code> 这样的 jsx 通过 babel 转义后会产生 <code>h(&#39;div&#39;, { id: &#39;foo&#39;, name : &#39;bar&#39; }, &#39;Hello!&#39;);</code> 这样的代码，其中的 createElement 也可以写成 h，意思是一样的。createElement 函数的执行后返回的就是 VNode，也就是常说的虚拟 dom 节点。</p>
-<p><strong>createElement(nodeName, attributes, …rest)  ，文件：<code>scr/h.js</code></strong><br>第一个参数是 string 类型的 nodeName ，比如 ‘div’, ‘span’<br>第二个参数是 object 类型的 attributes，也就是属性集合。<br>从第三个参数以及之后的参数都被认为是 children</p>
-<p>从代码中可以看出：createElement 函数会对 children 做扁平化处理，也就是传入的 children 可以是任意嵌套的数组。<br>另外，如果没有传入第三个参数但第二个参数对象有 children 这个属性，那么 children 属性会被作为 children 来对待。<br><strong>如果传入了第三个参数，则第二个参数对象里的 children 属性会被忽略</strong>。<br>然后，相邻的简单数据类型的 child 会用字符串连接的方式连接在一起：比如:</p>
-<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;div <span class="class"><span class="keyword">class</span></span>=<span class="string">'myclass'</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">  [<span class="string">'hello'</span>, <span class="string">' world'</span>]</span><br><span class="line">&#125;</span><br><span class="line">&lt;div&gt;</span><br></pre></td></tr></table></figure>
-<p>返回 vnode 为：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  nodeName: <span class="string">'div'</span>,</span><br><span class="line">  children:[<span class="string">'hello world'</span>], <span class="comment">// 不是 ['hello', 'world']</span></span><br><span class="line">  attributes: &#123;<span class="attr">class</span>: <span class="string">'myclass'</span>&#125;,</span><br><span class="line">  key: <span class="literal">undefined</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>值得注意，这里数组扁平化过程中用的是倒序推入 stack 的方式。比如上面 <code>[&#39;hello&#39;, &#39; world&#39;]</code> 这样的 children, 会先推入 world 再 推入 hello，<br>然后从 stack 里 pop 出来的时候是先处理 hello 后处理 world，整个过程保持了 children 的顺序。<br>源码如下:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (stack.length) &#123;</span><br><span class="line">  <span class="keyword">if</span> ((child = stack.pop()) &amp;&amp; child.pop!==<span class="literal">undefined</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (i=child.length; i--; ) stack.push(child[i]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>createElement 函数最终返回的 vnode 结构如下：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  nodeName&lt;<span class="built_in">String</span> | Component&gt;,</span><br><span class="line">  children&lt;<span class="built_in">Array</span>&gt;,</span><br><span class="line">  attributes&lt;<span class="built_in">Object</span>?&gt;,</span><br><span class="line">  key:&lt;String?&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>其中 key 是一个特殊的 attributes</p>
-<p>至此 createElement 函数就完成了。<br>简单总结一下 createElement 函数就是一个接受 dom 节点信息，返回 vnode tree 的函数。<br>vnode 是轻量级的js对象，可以很好的代表真实的 dom 节点。为后面的 dom 更新做准备。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/20/preact-1/" data-id="cjcovqmb80001xqemjex60x1u" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-
 
 </section>
         

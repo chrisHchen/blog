@@ -5,19 +5,19 @@
   
 
   
-  <title>preact 源码分析一 | </title>
+  <title>preact 源码(1) | </title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js jsx 与 createElement/h看">
-<meta name="keywords" content="preact">
+<meta name="keywords" content="preact(v8.2.7)">
 <meta property="og:type" content="article">
-<meta property="og:title" content="preact 源码分析一">
+<meta property="og:title" content="preact 源码(1)">
 <meta property="og:url" content="https://chrishchen.github.io/blog/2018/01/20/preact-1/index.html">
 <meta property="og:site_name">
 <meta property="og:description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js jsx 与 createElement/h看">
 <meta property="og:locale" content="cn">
-<meta property="og:updated_time" content="2018-01-21T11:03:04.000Z">
+<meta property="og:updated_time" content="2018-01-28T07:31:38.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="preact 源码分析一">
+<meta name="twitter:title" content="preact 源码(1)">
 <meta name="twitter:description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js jsx 与 createElement/h看">
   
     <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
@@ -56,7 +56,7 @@
         
           <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
@@ -79,7 +79,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      preact 源码分析一
+      preact 源码(1)
     </h1>
   
 
@@ -95,18 +95,19 @@
 <p>从代码中可以看出：createElement 函数会对 children 做扁平化处理，也就是传入的 children 可以是任意嵌套的数组。<br>另外，如果没有传入第三个参数但第二个参数对象有 children 这个属性，那么 children 属性会被作为 children 来对待。<br><strong>如果传入了第三个参数，则第二个参数对象里的 children 属性会被忽略</strong>。<br>然后，相邻的简单数据类型的 child 会用字符串连接的方式连接在一起：比如:</p>
 <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;div <span class="class"><span class="keyword">class</span></span>=<span class="string">'myclass'</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">  [<span class="string">'hello'</span>, <span class="string">' world'</span>]</span><br><span class="line">&#125;</span><br><span class="line">&lt;div&gt;</span><br></pre></td></tr></table></figure>
 <p>返回 vnode 为：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  nodeName: <span class="string">'div'</span>,</span><br><span class="line">  children:[<span class="string">'hello world'</span>], <span class="comment">// 不是 ['hello', 'world']</span></span><br><span class="line">  attributes: &#123;<span class="attr">class</span>: <span class="string">'myclass'</span>&#125;,</span><br><span class="line">  key: <span class="literal">undefined</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>值得注意，这里数组扁平化过程中用的是倒序推入 stack，比如上面 <code>[&#39;hello&#39;, &#39; world&#39;]</code> , 先推入 world 再推入 hello，<br>然后从 stack 里 push 出来是先处理 hello 后处理 world，这个过程保持了 children 的顺序。<br>源码如下:<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (stack.length) &#123;</span><br><span class="line">		<span class="keyword">if</span> ((child = stack.pop()) &amp;&amp; child.pop!==<span class="literal">undefined</span>) &#123;</span><br><span class="line">			<span class="keyword">for</span> (i=child.length; i--; ) stack.push(child[i]);</span><br><span class="line">		&#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>createElement 函数最终返回的 vnode 结构如下：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  nodeName&lt;<span class="built_in">String</span>&gt;,</span><br><span class="line">  children&lt;<span class="built_in">Array</span>&gt;,</span><br><span class="line">  attributes&lt;<span class="built_in">Object</span>?&gt;,</span><br><span class="line">  key:&lt;String?&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>值得注意，这里数组扁平化过程中用的是倒序推入 stack 的方式。比如上面 <code>[&#39;hello&#39;, &#39; world&#39;]</code> 这样的 children, 会先推入 world 再 推入 hello，<br>然后从 stack 里 pop 出来的时候是先处理 hello 后处理 world，整个过程保持了 children 的顺序。<br>源码如下:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (stack.length) &#123;</span><br><span class="line">  <span class="keyword">if</span> ((child = stack.pop()) &amp;&amp; child.pop!==<span class="literal">undefined</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (i=child.length; i--; ) stack.push(child[i]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>createElement 函数最终返回的 vnode 结构如下：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  nodeName&lt;<span class="built_in">String</span> | Component&gt;,</span><br><span class="line">  children&lt;<span class="built_in">Array</span>&gt;,</span><br><span class="line">  attributes&lt;<span class="built_in">Object</span>?&gt;,</span><br><span class="line">  key:&lt;String?&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>其中 key 是一个特殊的 attributes</p>
 <p>至此 createElement 函数就完成了。<br>简单总结一下 createElement 函数就是一个接受 dom 节点信息，返回 vnode tree 的函数。<br>vnode 是轻量级的js对象，可以很好的代表真实的 dom 节点。为后面的 dom 更新做准备。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/20/preact-1/" data-id="cjcokhbxp0000ibemk1fq6bit" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/20/preact-1/" data-id="cjcovqmb80001xqemjex60x1u" class="article-share-link">Share</a>
       
       
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact/">preact</a></li></ul>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
 
     </footer>
   </div>
@@ -114,11 +115,15 @@
     
 <nav id="article-nav">
   
-  
-    <a href="/blog/2018/01/20/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Älter</strong>
-      <div class="article-nav-title">Hello World</div>
+    <a href="/blog/2018/01/21/preact-2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          preact 源码(2)
+        
+      </div>
     </a>
+  
   
 </nav>
 
@@ -136,7 +141,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact/">preact</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
     </div>
   </div>
 
@@ -146,14 +151,14 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/blog/tags/preact/" style="font-size: 10px;">preact</a>
+      <a href="/blog/tags/preact-v8-2-7/" style="font-size: 10px;">preact(v8.2.7)</a>
     </div>
   </div>
 
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archiv</h3>
+    <h3 class="widget-title">Archives</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
@@ -163,16 +168,20 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">letzter Beitrag</h3>
+    <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
         
           <li>
-            <a href="/blog/2018/01/20/preact-1/">preact 源码分析一</a>
+            <a href="/blog/2018/01/28/preact-3/">preact 源码(3)</a>
           </li>
         
           <li>
-            <a href="/blog/2018/01/20/hello-world/">Hello World</a>
+            <a href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
           </li>
         
       </ul>
@@ -187,7 +196,7 @@
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2018 John Doe<br>
+      &copy; 2018 Chris H Chen<br>
       Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
