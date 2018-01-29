@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>preact 源码(4) | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="buildComponentFromVNode方法 这是上篇没有展开的一个方法。preact 通过 buildComponentFromVNode(dom, vnode, context, mountAll) 进行 component diff。 组件是 react/preact 的基本思想。所有的组件都会通过 buildComponentFromVNode 方法来初始化 dom 或者diff d">
+<meta name="keywords" content="preact(v8.2.7)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="preact 源码(4)">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/01/28/preact-4/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="buildComponentFromVNode方法 这是上篇没有展开的一个方法。preact 通过 buildComponentFromVNode(dom, vnode, context, mountAll) 进行 component diff。 组件是 react/preact 的基本思想。所有的组件都会通过 buildComponentFromVNode 方法来初始化 dom 或者diff d">
+<meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2018-01-28T17:00:41.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="preact 源码(4)">
+<meta name="twitter:description" content="buildComponentFromVNode方法 这是上篇没有展开的一个方法。preact 通过 buildComponentFromVNode(dom, vnode, context, mountAll) 进行 component diff。 组件是 react/preact 的基本思想。所有的组件都会通过 buildComponentFromVNode 方法来初始化 dom 或者diff d">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-preact-4" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/01/28/preact-4/" class="article-date">
+  <time datetime="2018-01-28T10:00:18.000Z" itemprop="datePublished">2018-01-28</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      preact 源码(4)
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>buildComponentFromVNode方法</strong></p>
+<p>这是上篇没有展开的一个方法。<br>preact 通过 <code>buildComponentFromVNode(dom, vnode, context, mountAll)</code> 进行 component diff。</p>
+<p>组件是 react/preact 的基本思想。所有的组件都会通过 <code>buildComponentFromVNode</code> 方法来初始化 dom 或者diff dom。 </p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">buildComponentFromVNode</span>(<span class="params">dom, vnode, context, mountAll</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第一个参数 dom 是需要 diff 的 dom 节点。第二个参数是对应的 vnode。这里的 vnode.nodeName 为 component 的构造函数。</p>
+<p>方法首先通过 <code>vnode.attributes</code> 和 <code>vnode.nodeName.defaultProps</code> 获得 component 实例的 props 参数。</p>
+<p>该方法对 component 做 diff 的逻辑如下:</p>
+<ol>
+<li><p>当 dom 存在， 并且 dom._component 或者其祖先 component 的构造器 == vnode.nodeName 时， 认为 vnode 是 dom 的 owner, 此时复用之前的 component 实例，并调用 setComponentProps 方法赋予新的 props.</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> c = dom &amp;&amp; dom._component,</span><br><span class="line">...</span><br><span class="line"><span class="keyword">while</span> (c &amp;&amp; !isOwner &amp;&amp; (c=c._parentComponent)) &#123;</span><br><span class="line">  isOwner = c.constructor===vnode.nodeName;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (c &amp;&amp; isOwner &amp;&amp; (!mountAll || c._component)) &#123;</span><br><span class="line">  setComponentProps(c, props, ASYNC_RENDER, context, mountAll);</span><br><span class="line">  dom = c.base;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果 dom._component 存在，但和 vnode.nodeName 构造器不一致，则认为不是同个 component。此时进行 <code>unmountComponent</code> 操作并回收 component 实例。 然后调用 <code>c = createComponent(vnode.nodeName, props, context)</code> 方法构建新的 component 实例, 并调用 <code>setComponentProps(c, props, SYNC_RENDER, context, mountAll);</code> 方法，此处是新创建的实例所以传递了 SYNC_RENDER 来直接 render (instead of enqueue)。</p>
+</li>
+</ol>
+<p>如果 dom 有变化则移除 dom,  最后返回 <code>dom = c.base</code></p>
+<p><strong>setComponentProps 方法</strong><br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setComponentProps</span>(<span class="params">component, props, opts, context, mountAll</span>)</span></span><br><span class="line"><span class="function">  ...</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure></p>
+<p>该方法为 component 设置新的 props，为 mount/update 做准备。<br>经过该方法后 component 实例上会 新增/更新 如下几个内部属性:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">component.__ref = props.ref</span><br><span class="line">component.__key = props.key</span><br><span class="line">component.context = context <span class="comment">// prevContext 初次</span></span><br><span class="line">component.props = props <span class="comment">// prevProps 初次</span></span><br><span class="line"><span class="keyword">if</span> (component.__ref) component.__ref(component); <span class="comment">// component ref is component instance, not underlining dom</span></span><br></pre></td></tr></table></figure>
+<p>该方法根据 component.base 是否存在执行不同的生命周期函数:<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!component.base || mountAll) &#123;</span><br><span class="line">  <span class="keyword">if</span> (component.componentWillMount) component.componentWillMount();</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (component.componentWillReceiveProps) &#123;</span><br><span class="line">  component.componentWillReceiveProps(props, context);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>当该方法接收到的 opts 参数为 SYNC_RENDER 或者 component.base 不存在时(也就是初次render)会直接调用<code>renderComponent</code>方法，否则会将 component 推入render queue，在下一个事件周期调用 renderComponent（类似 <code>setState</code> 方法）。</p>
+<p><strong>renderComponent方法</strong></p>
+<p>该方法决定了 component 的更新策略，以及对 HOC 的处理策略。通过 render 产生的 vnode tree 来调用 diff 算法，生成或更新 dom tree。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">renderComponent</span>(<span class="params">component, opts, mountAll, isChild</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中 isChild 属性指示 component 是否是 HOC 的 root component 实例。</p>
+<p>首先通过 component.base 判断是是首次 mount 还是 update，因为通过 <code>createComponent</code> 方法新创建的 component 实例是没有 base 属性的。</p>
+<p>如果是 update 并且 opt !== FORCE_RENDER, 则执行 <code>shouldComponentUpdate</code> 周期函数, 如果返回true，则在执行 <code>componentWillUpdate</code> 周期函数。</p>
+<p>执行完上面两步后会将所有的 prev 置空，并认为此时的 component 已经是和 update 前的状态无关了，是 clean 的。可知如果在接下来的 render 方法里调用 this.props 则返回的是新的 prop 了。<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">component.prevProps = component.prevState = component.prevContext = component.nextBase = <span class="literal">null</span>;</span><br><span class="line">component._dirty = <span class="literal">false</span>;</span><br></pre></td></tr></table></figure></p>
+<p>如果 <code>shouldComponentUpdate</code> 返回 true， 接下里执行 <code>rendered = component.render(props, state, context)</code> 方法。 然后将context 和 component.getChildContext() 做 merge 后作为新 context 传给子 component。</p>
+<p>接下来对 component 是否是 HOC 分别做判断:</p>
+<p>如果存在 HOC(<code>typeof rendered.nodeName === &#39;function&#39;</code>) 则进行 HOC diff，逻辑如下:</p>
+<ol>
+<li><p>如果 component._component 存在，且 component._component 的构造器等于 rendered.nodeName，且 key 也一致(childProps.key==component._component.__key),则认为是同一个 component 的更新操作，所以调用 <code>setComponentProps</code> 更新, 并直接render。</p>
+</li>
+<li><p>否则认为是不同的 component，所以通过 <code>createComponent</code> 创建 component 实例</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">component._component = inst = createComponent(childComponent, childProps, context);</span><br><span class="line">inst.nextBase = inst.nextBase || nextBase;</span><br><span class="line">inst._parentComponent = component;</span><br><span class="line">setComponentProps(inst, childProps, NO_RENDER, context, <span class="literal">false</span>);</span><br><span class="line">renderComponent(inst, SYNC_RENDER, mountAll, <span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>可见 HOC 实例通过 <code>_component</code> 属性指向他返回的 vnode tree 的 root component 实例，而一个 root component 实例则通过 <code>_parentComponent</code> 属性 指向 HOC 实例:</p>
+<p>从下面这个例子可以验证上面的判断，四处console的结果都是true：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span> <span class="keyword">extends</span> <span class="title">Component</span> </span>&#123;</span><br><span class="line">  componentDidMount() &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>._parentComponent <span class="keyword">instanceof</span> A);<span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>._parentComponent._component <span class="keyword">instanceof</span> B);<span class="comment">//true</span></span><br><span class="line">  &#125;</span><br><span class="line">  render() &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span> <span class="keyword">extends</span> <span class="title">Component</span> </span>&#123;</span><br><span class="line">  componentDidMount() &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>.b._parentComponent <span class="keyword">instanceof</span> A); <span class="comment">//true</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="keyword">this</span>._component <span class="keyword">instanceof</span> B);<span class="comment">//true</span></span><br><span class="line">  &#125;</span><br><span class="line">  render() &#123;</span><br><span class="line">    <span class="keyword">return</span> &lt;B ref=&#123;el =&gt; this.b = el&#125; /&gt;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">render(&lt;A/&gt;, document.getElementById('root'))</span><br></pre></td></tr></table></figure></p>
+<p>如果不存在 HOC(<code>typeof rendered.nodeName !== &#39;function&#39;</code>),则进行 diff 运算。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">base = diff(cbase, rendered, context, mountAll || !isUpdate, initialBase &amp;&amp; initialBase.parentNode, <span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+<p>注意这里的 componentRoot 为 true， 如果是首次 mount 的话 mountAll 参数也为 true。</p>
+<p>之后通过 <code>component.base = base</code> 将 diff 返回的 dom 挂载到 component.base 属性上。 由此， component 实例可以通过 base 属性来访问对应的 dom。</p>
+<p>并通过 <code>base._component = componentRef</code> 和 <code>base._componentConstructor = componentRef.constructor;</code> 将 component 实例的引用挂载到 dom 节点的属性上。由此， dom 节点可以通过 _component 和 _componentConstructor 属性来分别访问对应的 component 实例 和 实例的构造函数。注意这里的 实例 是最高一级的 HOC 实例。每一级 HOC 的 base 属性都是同一个 dom。</p>
+<p>最后调用周期函数 <code>componentDidUpdate</code>。</p>
+<p>到这里整个 renderComponent 方法就结束了。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-4/" data-id="cjcymggws000933em14imcpji" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/blog/2018/01/29/preact-5/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          preact 源码(5)
+        
+      </div>
+    </a>
+  
+  
+    <a href="/blog/2018/01/28/preact-3/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">preact 源码(3)</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/preact-v8-2-7/" style="font-size: 10px;">preact(v8.2.7)</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/28/preact-4/">preact 源码(4)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/28/preact-3/">preact 源码(3)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
