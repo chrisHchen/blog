@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>preact 源码(总结篇) | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="diff 做了什么？  用作者的原话就是:Apply differences in a given vnode (and it’s deep children) to a real DOM Node.  其中的 differences 是指 dom._component 和 vnode 的 difference. 其中 dom._component 是前一状态，vnode 是本次update更新">
+<meta name="keywords" content="preact(v8.2.7)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="preact 源码(总结篇)">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/02/03/preact-6/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="diff 做了什么？  用作者的原话就是:Apply differences in a given vnode (and it’s deep children) to a real DOM Node.  其中的 differences 是指 dom._component 和 vnode 的 difference. 其中 dom._component 是前一状态，vnode 是本次update更新">
+<meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2018-02-04T12:01:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="preact 源码(总结篇)">
+<meta name="twitter:description" content="diff 做了什么？  用作者的原话就是:Apply differences in a given vnode (and it’s deep children) to a real DOM Node.  其中的 differences 是指 dom._component 和 vnode 的 difference. 其中 dom._component 是前一状态，vnode 是本次update更新">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-preact-6" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/02/03/preact-6/" class="article-date">
+  <time datetime="2018-02-03T14:00:18.000Z" itemprop="datePublished">2018-02-03</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      preact 源码(总结篇)
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <hr>
+<p><strong>diff 做了什么？</strong> </p>
+<p>用作者的原话就是:<br><blockquote><p>Apply differences in a given vnode (and it’s deep children) to a real DOM Node.</p>
+</blockquote></p>
+<p>其中的 <strong>differences</strong> 是指 <code>dom._component</code> 和 <code>vnode</code> 的 difference. 其中 <code>dom._component</code> 是前一状态，<code>vnode</code> 是本次update更新后的状态。两种状态作比较，用最小的代价来做更新。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">diff(dom, vnode, context, mountAll, parent, componentRoot)</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<p><strong>diff 的流程</strong></p>
+<p>初次render: </p>
+<p><code>preact.render()</code> =&gt;<code>diff()</code> =&gt;  <code>idiff()</code> <span style="color:#0366d6">=&gt;[ <code>buildComponentFromVNode</code> =&gt; <code>setComponentProps</code> &lt;=&gt; <code>renderComponent</code> &lt;=&gt; <code>component.render() =&gt; diff() =&gt; ...</code>] </span> =&gt; <code>innerDiffNode()</code> =&gt; <code>idiff()</code> =&gt; … until no vnode left, return dom root.</p>
+<p>如果是 update, 那么直接从 <code>renderComponent</code> 开始执行。</p>
+<p>其中蓝色部分是 component diff 的过程，会触发我们熟悉的的一系列生命周期函数。他们执行的先后顺序如下:</p>
+<p><code>componentWillMount</code>: parent =&gt; child<br><code>componentDidMount</code>: child =&gt; parent<br><code>componentWillUpdate</code>: parent =&gt; child<br><code>componentDidUpdate</code>: child =&gt; parent<br><code>componentWillUnmount</code>: parent =&gt; child</p>
+<p><code>componentWillReceiveProps</code>: parent =&gt; child<br><code>shouldComponentUpdate</code>: parent =&gt; child</p>
+<p>值得注意的是，<code>componentWillReceiveProps</code> 是在 <code>setComponentProps()</code>中被执行, 而且是在 <code>renderComponent/enqueueRender</code> 之前执行的, 所以在 <code>componentWillReceiveProps</code> 中可以调用 <code>setState</code> 来改变组件状态，新状态会在 <code>renderComponent/enqueueRender</code> 中被体现。</p>
+<p>而 <code>componentWillUpdate</code> 是在 <code>renderComponent</code> 中被执行，如果在 <code>componentWillUpdate</code> 中调用了 <code>setState</code>，会导致正在 render 的实例被再次推入 render 队列，出现死循环。同理 <code>render</code> 时也不能调用 <code>setState</code> 。</p>
+<p><strong>diff 过程中的几个容易忽视的点</strong></p>
+<ul>
+<li><p>如果出现<strong>新建 <code>dom</code> 节点</strong>的情况，且老的节点有父节点，那么一定要用新建节点替换父节点下的老节点。同样的，如果老节点有子节点，也要将子节点 append 到新建节点。</p>
+</li>
+<li><p>当有 hoc 的情况时，所有祖先 <code>component</code> 的 <code>base</code> 属性都指向最后那个child产生的 <code>dom</code> 节点，而这个 <code>dom</code> 节点的 <code>_component</code> 属性指向<strong>最高的</strong>祖先 component 实例。(<code>_componentConstructor</code> 属性也同样指向的是最高祖先的构造函数)</p>
+</li>
+</ul>
+<p><strong>collectComponent方法: 回收实例</strong></p>
+<p><code>collectComponent</code> 函数会将 <code>unmount</code> 的 component 实例按照构造器来分类回收。当新建 component 实例时, 会在回收器中拿出一个同构造函数的实例，将实例对应的 <code>dom</code> (nextBase属性)赋值给新实例的 <code>nextBase</code> 属性。这样可以重用 dom 节点，减少 <code>createElement</code> 操作。</p>
+<p>当然这样做的前提是认为同一个构造器大多数情况下总是会 <code>render</code> 出相同 type 的 <code>dom</code>。</p>
+<p>如果你有很多类似这样的构造器:<br><figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">render()&#123;</span><br><span class="line">  <span class="keyword">const</span> ret = <span class="keyword">this</span>.props.type === <span class="number">1</span> </span><br><span class="line">    ?</span><br><span class="line">    &lt;div/&gt;</span><br><span class="line">    :</span><br><span class="line">    &lt;span/&gt;</span><br><span class="line">  <span class="keyword">return</span> ret</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>那么回收机制就不会起太大作用了</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/02/03/preact-6/" data-id="cjd7cmh3p0005sc6r6p2nnpv6" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/blog/2018/01/29/preact-5/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">preact 源码(5)</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/preact-v8-2-7/" style="font-size: 10px;">preact(v8.2.7)</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/28/preact-4/">preact 源码(4)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/28/preact-3/">preact 源码(3)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

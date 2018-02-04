@@ -7,18 +7,18 @@
   
   <title>preact 源码(1) | </title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js jsx 与 createElement/h看">
+  <meta name="description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js">
 <meta name="keywords" content="preact(v8.2.7)">
 <meta property="og:type" content="article">
 <meta property="og:title" content="preact 源码(1)">
 <meta property="og:url" content="https://chrishchen.github.io/blog/2018/01/20/preact-1/index.html">
 <meta property="og:site_name">
-<meta property="og:description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js jsx 与 createElement/h看">
+<meta property="og:description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js">
 <meta property="og:locale" content="cn">
-<meta property="og:updated_time" content="2018-01-28T07:31:38.000Z">
+<meta property="og:updated_time" content="2018-02-04T12:00:40.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="preact 源码(1)">
-<meta name="twitter:description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js jsx 与 createElement/h看">
+<meta name="twitter:description" content="Preact 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。 Preact 整个项目是用 rollup 来构建，构建的配置文件在 config/rollup.config.js, 入口文件是 src/preact.js">
   
     <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
   
@@ -88,8 +88,7 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p><a href="https://preactjs.com/" target="_blank" rel="noopener">Preact</a> 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。</p>
-<p>Preact 整个项目是用 rollup 来构建，构建的配置文件在 <code>config/rollup.config.js</code>, 入口文件是 <code>src/preact.js</code></p>
-<p><strong>jsx 与 createElement/h</strong><br>看 createElement 函数前有必要先了解下 jsx。 这篇文章<a href="http://jasonformat.com/wtf-is-jsx" target="_blank" rel="noopener">(wtf-is-jsx)</a>非常好的解释了什么是 jsx 以及 jsx 如何转化为 vnode!</p>
+<p>Preact 整个项目是用 rollup 来构建，构建的配置文件在 <code>config/rollup.config.js</code>, 入口文件是 <code>src/preact.js</code><br><a id="more"></a><br><strong>jsx 与 createElement/h</strong><br>看 createElement 函数前有必要先了解下 jsx。 这篇文章<a href="http://jasonformat.com/wtf-is-jsx" target="_blank" rel="noopener">(wtf-is-jsx)</a>非常好的解释了什么是 jsx 以及 jsx 如何转化为 vnode!</p>
 <p>比如 <code>&lt;div id=&quot;foo&quot; name=&quot;bar&quot;&gt;Hello!&lt;/div&gt;</code> 这样的 jsx 通过 babel 转义后会产生 <code>h(&#39;div&#39;, { id: &#39;foo&#39;, name : &#39;bar&#39; }, &#39;Hello!&#39;);</code> 这样的代码，其中的 createElement 也可以写成 h，意思是一样的。createElement 函数的执行后返回的就是 VNode，也就是常说的虚拟 dom 节点。</p>
 <p><strong>createElement(nodeName, attributes, …rest)  ，文件：<code>scr/h.js</code></strong><br>第一个参数是 string 类型的 nodeName ，比如 ‘div’, ‘span’<br>第二个参数是 object 类型的 attributes，也就是属性集合。<br>从第三个参数以及之后的参数都被认为是 children</p>
 <p>从代码中可以看出：createElement 函数会对 children 做扁平化处理，也就是传入的 children 可以是任意嵌套的数组。<br>另外，如果没有传入第三个参数但第二个参数对象有 children 这个属性，那么 children 属性会被作为 children 来对待。<br><strong>如果传入了第三个参数，则第二个参数对象里的 children 属性会被忽略</strong>。<br>然后，相邻的简单数据类型的 child 会用字符串连接的方式连接在一起：比如:</p>
@@ -104,7 +103,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/20/preact-1/" data-id="cjcymemda000133em34modvfz" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/20/preact-1/" data-id="cjd7cmh3c0000sc6rrcwtubz9" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -160,7 +159,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archiv</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
   </div>
 
@@ -171,6 +170,10 @@
     <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
+          </li>
         
           <li>
             <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
@@ -186,10 +189,6 @@
         
           <li>
             <a href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
           </li>
         
       </ul>

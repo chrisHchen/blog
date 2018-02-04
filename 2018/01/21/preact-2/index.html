@@ -15,7 +15,7 @@
 <meta property="og:site_name">
 <meta property="og:description" content="component.js 所有组件的基类 成员方法 setStatepreact 和 react 在实现 setState 上有一些不同:从源码可以看出 preact 的 setState 是同步变化 state 的 1234567setState(state, callback) &amp;#123;  let s = this.state;  if (!this.prevState) this.pre">
 <meta property="og:locale" content="cn">
-<meta property="og:updated_time" content="2018-01-28T14:12:26.000Z">
+<meta property="og:updated_time" content="2018-02-04T12:00:29.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="preact 源码(2)">
 <meta name="twitter:description" content="component.js 所有组件的基类 成员方法 setStatepreact 和 react 在实现 setState 上有一些不同:从源码可以看出 preact 的 setState 是同步变化 state 的 1234567setState(state, callback) &amp;#123;  let s = this.state;  if (!this.prevState) this.pre">
@@ -90,16 +90,18 @@
         <p><strong>component.js 所有组件的基类</strong></p>
 <p>成员方法 setState<br>preact 和 react 在实现 setState 上有一些不同:<br>从源码可以看出 preact 的 setState 是同步变化 state 的</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setState(state, callback) &#123;</span><br><span class="line">  <span class="keyword">let</span> s = <span class="keyword">this</span>.state;</span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.prevState) <span class="keyword">this</span>.prevState = extend(&#123;&#125;, s);</span><br><span class="line">  extend(s, <span class="keyword">typeof</span> state===<span class="string">'function'</span> ? state(s, <span class="keyword">this</span>.props) : state);</span><br><span class="line">  <span class="keyword">if</span> (callback) (<span class="keyword">this</span>._renderCallbacks = (<span class="keyword">this</span>._renderCallbacks || [])).push(callback);</span><br><span class="line">  enqueueRender(<span class="keyword">this</span>);</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
 <p>但 react 的 setState 是一个异步调用:</p>
 <p>如下代码分别用 react 和 preact 执行，可发现明显差异：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">state = &#123;</span><br><span class="line">  word: <span class="string">'hello'</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// react</span></span><br><span class="line">mutate = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">this</span>.setState(&#123;</span><br><span class="line">    word: <span class="string">`<span class="subst">$&#123;<span class="keyword">this</span>.state.word&#125;</span> world`</span></span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="keyword">this</span>.state.word) <span class="comment">// 此处打印 hello</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//preact</span></span><br><span class="line">mutate = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">this</span>.setState(&#123;</span><br><span class="line">    word: <span class="string">`<span class="subst">$&#123;<span class="keyword">this</span>.state.word&#125;</span> world`</span></span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="keyword">this</span>.state.word) <span class="comment">// 此处打印 hello world</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p><strong>render-queue.js: batch component update</strong><br>调用 setState 方法并不会马上更新组件。Preact 通过 enqueueRender 方法，将更新操作缓存起来，在下一个事件周期做批量更新。这里的策略是先将 component 实例标记为 dirty， 然后将其推入 items 数组，通过 <code>util.defer</code> 方法在下个事件周期通过 renderComponent 方法批量更新 component 实例。</p>
+<p><strong>render-queue.js: batch component update</strong><br>调用 setState 方法并不会马上更新组件。Preact 通过 enqueueRender 方法，将更新操作缓存起来，在下一个事件周期做批量更新。这里的策略是先将 <code>component</code> 实例标记为 <code>dirty，</code> 然后将其推入 <code>items</code> 数组，通过 <code>util.defer</code> 方法在下个事件周期通过 renderComponent 方法批量更新 component 实例。</p>
+<p>其中设置 <code>dirty</code> 的作用是防止多次 setState 重复将 component 实例推入 <code>items</code> 数组。</p>
 <p>基类中还有 <code>forceUpdate</code> 方法，和 React 的 forceUpdate 类似，<code>forceUpdate</code> 会直接跳过 enqueueRender 直接进入 <code>renderComponent</code> 方法，并且因为是 <code>FORCE_RENDER</code>, 所以不会执行 <code>shouldComponentUpdate</code> 周期函数</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">forceUpdate(callback) &#123;</span><br><span class="line">  <span class="keyword">if</span> (callback) (<span class="keyword">this</span>._renderCallbacks = (<span class="keyword">this</span>._renderCallbacks || [])).push(callback);</span><br><span class="line">  renderComponent(<span class="keyword">this</span>, FORCE_RENDER);</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/21/preact-2/" data-id="cjcymemd6000033emd96dhndz" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/21/preact-2/" data-id="cjd7cmh3m0003sc6r11h47zz7" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -160,7 +162,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archiv</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
   </div>
 
@@ -171,6 +173,10 @@
     <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
+          </li>
         
           <li>
             <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
@@ -186,10 +192,6 @@
         
           <li>
             <a href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
           </li>
         
       </ul>

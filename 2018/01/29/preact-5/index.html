@@ -15,7 +15,7 @@
 <meta property="og:site_name">
 <meta property="og:description" content="createComponent 方法 这个方法进行 component 实例的初始化工作 12function createComponent(Ctor, props, context)&amp;#125; 第一个参数是 component 构造函数。第二个参数是初始化 props，一般把 vnode 的 attribute 和 component 的 defaultProps 做 merge 后获得。">
 <meta property="og:locale" content="cn">
-<meta property="og:updated_time" content="2018-01-29T16:13:07.000Z">
+<meta property="og:updated_time" content="2018-02-04T12:01:16.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="preact 源码(5)">
 <meta name="twitter:description" content="createComponent 方法 这个方法进行 component 实例的初始化工作 12function createComponent(Ctor, props, context)&amp;#125; 第一个参数是 component 构造函数。第二个参数是初始化 props，一般把 vnode 的 attribute 和 component 的 defaultProps 做 merge 后获得。">
@@ -93,14 +93,13 @@
 <p>第一个参数是 component 构造函数。<br>第二个参数是初始化 props，一般把 vnode 的 attribute 和 component 的 defaultProps 做 merge 后获得。</p>
 <p>通过 <code>Ctor.prototype.render</code> 是否存在判断是否是 PFC，然后给 PFC 加上一个 render 函数：</p>
 <p>下面是对 PFC 的实例化过程：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">inst = <span class="keyword">new</span> Component(props, context);</span><br><span class="line">inst.constructor = Ctor;</span><br><span class="line">inst.render = doRender;</span><br><span class="line">...</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">doRender</span>(<span class="params">props, state, context</span>) </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">this</span>.constructor(props, context);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>从中可以看出 preact 的 PFC 是通过 new 实例化的，所以也是有 instance 的。既然有instance就可以使用 ref，这也是和 react 不同的地方。看下面的例子:</p>
-<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//react </span></span><br><span class="line"><span class="keyword">const</span> Pfc = <span class="function"><span class="params">()</span> =&gt;</span> &lt;div&gt;ref&lt;<span class="regexp">/div&gt;</span></span><br><span class="line"><span class="regexp"></span></span><br><span class="line"><span class="regexp">class A extends Component &#123;</span></span><br><span class="line"><span class="regexp">  componentDidMount() &#123;</span></span><br><span class="line"><span class="regexp">    console.log(this.r); /</span><span class="regexp">/ 打印 undefined</span></span><br><span class="line"><span class="regexp">  &#125;</span></span><br><span class="line"><span class="regexp">  render() &#123;</span></span><br><span class="line"><span class="regexp">    return &lt;Pfc ref=&#123;el =&gt; this.r = el&#125; /</span>&gt;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// preact</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> Pfc = <span class="function"><span class="params">()</span> =&gt;</span> &lt;div&gt;ref&lt;<span class="regexp">/div&gt;;</span></span><br><span class="line"><span class="regexp"></span></span><br><span class="line"><span class="regexp">class A extends Component &#123;</span></span><br><span class="line"><span class="regexp">  componentDidMount() &#123;</span></span><br><span class="line"><span class="regexp">    console.log(this.r); /</span><span class="regexp">/ 打印出 pfc 实例</span></span><br><span class="line"><span class="regexp">  &#125;</span></span><br><span class="line"><span class="regexp">  render() &#123;</span></span><br><span class="line"><span class="regexp">    return &lt;Pfc ref=&#123;el =&gt; this.r = el&#125; /</span>&gt;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从中可以看出 preact 的 PFC 是通过 new 实例化的，所以也是有 instance 的。既然有instance就可以使用 ref，这也是和 react 不同的地方。看下面的例子:<br><a id="more"></a><br><figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//react </span></span><br><span class="line"><span class="keyword">const</span> Pfc = <span class="function"><span class="params">()</span> =&gt;</span> &lt;div&gt;ref&lt;<span class="regexp">/div&gt;</span></span><br><span class="line"><span class="regexp"></span></span><br><span class="line"><span class="regexp">class A extends Component &#123;</span></span><br><span class="line"><span class="regexp">  componentDidMount() &#123;</span></span><br><span class="line"><span class="regexp">    console.log(this.r); /</span><span class="regexp">/ 打印 undefined</span></span><br><span class="line"><span class="regexp">  &#125;</span></span><br><span class="line"><span class="regexp">  render() &#123;</span></span><br><span class="line"><span class="regexp">    return &lt;Pfc ref=&#123;el =&gt; this.r = el&#125; /</span>&gt;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// preact</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> Pfc = <span class="function"><span class="params">()</span> =&gt;</span> &lt;div&gt;ref&lt;<span class="regexp">/div&gt;;</span></span><br><span class="line"><span class="regexp"></span></span><br><span class="line"><span class="regexp">class A extends Component &#123;</span></span><br><span class="line"><span class="regexp">  componentDidMount() &#123;</span></span><br><span class="line"><span class="regexp">    console.log(this.r); /</span><span class="regexp">/ 打印出 pfc 实例</span></span><br><span class="line"><span class="regexp">  &#125;</span></span><br><span class="line"><span class="regexp">  render() &#123;</span></span><br><span class="line"><span class="regexp">    return &lt;Pfc ref=&#123;el =&gt; this.r = el&#125; /</span>&gt;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>这也是 preact 主要函数中的最后一个。到这里这个版本的 preact 源码就基本看完了。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/29/preact-5/" data-id="cjd0dbgle0000cbemmgc7cfuv" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/29/preact-5/" data-id="cjd7cmh3h0001sc6rkble72z5" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -110,6 +109,15 @@
   
     
 <nav id="article-nav">
+  
+    <a href="/blog/2018/02/03/preact-6/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          preact 源码(总结篇)
+        
+      </div>
+    </a>
   
   
     <a href="/blog/2018/01/28/preact-4/" id="article-nav-older" class="article-nav-link-wrap">
@@ -152,7 +160,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archiv</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
   </div>
 
@@ -163,6 +171,10 @@
     <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
+          </li>
         
           <li>
             <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
@@ -178,10 +190,6 @@
         
           <li>
             <a href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
           </li>
         
       </ul>

@@ -15,7 +15,7 @@
 <meta property="og:site_name">
 <meta property="og:description" content="render.js  Preact.render 方法将 component 树挂载到 DOM 节点, 类似 ReactDOM.render。123export function render(vnode, parent, merge) &amp;#123;  return diff(merge, vnode, &amp;#123;&amp;#125;, false, parent, false);&amp;#125; 前两个参">
 <meta property="og:locale" content="cn">
-<meta property="og:updated_time" content="2018-01-28T16:34:45.000Z">
+<meta property="og:updated_time" content="2018-02-04T12:00:47.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="preact 源码(3)">
 <meta name="twitter:description" content="render.js  Preact.render 方法将 component 树挂载到 DOM 节点, 类似 ReactDOM.render。123export function render(vnode, parent, merge) &amp;#123;  return diff(merge, vnode, &amp;#123;&amp;#125;, false, parent, false);&amp;#125; 前两个参">
@@ -89,8 +89,7 @@
       
         <p><strong>render.js </strong></p>
 <p>Preact.render 方法将 component 树挂载到 DOM 节点, 类似 ReactDOM.render。<br><figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">render</span>(<span class="params">vnode, parent, merge</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> diff(merge, vnode, &#123;&#125;, <span class="literal">false</span>, parent, <span class="literal">false</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>前两个参数和 ReactDOM 的 render 方法类似，不同的是这里提供了第三个参数 merge，如果 merge 存在并且是 parent 的子节点，那么会通过 diff 算法来更新 merge。</p>
-<p><strong>diff.js </strong></p>
+<p>前两个参数和 ReactDOM 的 render 方法类似，不同的是这里提供了第三个参数 merge，如果 merge 存在并且是 parent 的子节点，那么会通过 diff 算法来更新 merge。<br><a id="more"></a><br><strong>diff.js </strong></p>
 <p>diff 算法是整个框架的核心，决定了 Preact 如何判断是否要更新或重建一个节点(节点的属性)。通俗的讲，<strong>就是如何以最小的代价通过 vnode tree 来更新现有的 dom tree</strong>。</p>
 <p>diff 的参数如下:<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">diff</span>(<span class="params">dom, vnode, context, mountAll, parent, componentRoot</span>)</span>&#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>第一个参数 dom 是本次 diff 需要更新的 dom tree。可以为 null。为 null 时即为创建dom。<br>第二个参数是通过 createElement 返回的虚拟 dom 即 vnode，代表了本次 diff 返回的 dom 的结构。<br>第三个参数 context 和 react 中的 context 类似，是祖先节点通过 getChildContext 方法传递下来的prop，默认值为一个空对象<br>第四个参数 mountAll 代表是否要 mount 整个树，这关系到 component 实例在 diff 过程中是否强制调用 componentWillMount 和 componentDidMount。<br>第五个参数就是整个 tree 挂载的 container<br>第六个参数指定本次 diff 的 vnode 是不是某 component 实例的root节点。如果是 root 则需要在 root diff 产生的 dom 被替换到文档流之后才能调用 <code>flushMounts</code> 方法，否则 componentDidMount 可能会取不到 dom 节点。</p>
@@ -125,7 +124,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-3/" data-id="cjcymemdk000333empk2zudhz" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-3/" data-id="cjd7cmh3o0004sc6r4mhdfpb3" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -186,7 +185,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archiv</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
   </div>
 
@@ -197,6 +196,10 @@
     <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
+          </li>
         
           <li>
             <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
@@ -212,10 +215,6 @@
         
           <li>
             <a href="/blog/2018/01/21/preact-2/">preact 源码(2)</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
           </li>
         
       </ul>
