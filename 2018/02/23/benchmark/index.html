@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>基准测试-用benchmark.js分析代码性能 | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="如何精确的测试 javascript 的性能？或者说如何测试两段代码哪段执行的更快？大多数情况下我们都会用类似如下的代码来比较执行速度: 123456const test = function()&amp;#123;  var startTime = new Date().getTime()  ...  var endTime = new Date().getTime()  console.log(`du">
+<meta name="keywords" content="测试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基准测试-用benchmark.js分析代码性能">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/02/23/benchmark/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="如何精确的测试 javascript 的性能？或者说如何测试两段代码哪段执行的更快？大多数情况下我们都会用类似如下的代码来比较执行速度: 123456const test = function()&amp;#123;  var startTime = new Date().getTime()  ...  var endTime = new Date().getTime()  console.log(`du">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https://chrishchen.github.io/blog/2018/02/23/benchmark/bench_suite.png">
+<meta property="og:updated_time" content="2018-02-23T13:51:36.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基准测试-用benchmark.js分析代码性能">
+<meta name="twitter:description" content="如何精确的测试 javascript 的性能？或者说如何测试两段代码哪段执行的更快？大多数情况下我们都会用类似如下的代码来比较执行速度: 123456const test = function()&amp;#123;  var startTime = new Date().getTime()  ...  var endTime = new Date().getTime()  console.log(`du">
+<meta name="twitter:image" content="https://chrishchen.github.io/blog/2018/02/23/benchmark/bench_suite.png">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-benchmark" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/02/23/benchmark/" class="article-date">
+  <time datetime="2018-02-23T13:37:03.000Z" itemprop="datePublished">2018-02-23</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      基准测试-用benchmark.js分析代码性能
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>如何精确的测试 javascript 的性能？或者说如何测试两段代码哪段执行的更快？<br>大多数情况下我们都会用类似如下的代码来比较执行速度:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> startTime = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime()</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> endTime = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime()</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">`duration: <span class="subst">$&#123;endTime - startTime&#125;</span>`</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样的测试方法有什么问题呢？ 网上有个很好的答案：<br><a id="more"></a></p>
+<blockquote><div style="font-size: 12px; text-align:left; color: #999"><br>如果报告的时间是0，可能你会认为它的执行时间小于1ms。但是，这并不十分精确。有些平台的精度并没有达到1ms，而是以更大的递增间隔更新定时器。比如，Windows（也就是IE）的早期版本上的精度只有15ms，这就意味着这个运算的运行时间至少需要这么长才不会被报告为0！<br><br>还有，不管报告的时长是多少，你能知道的唯一一点就是，这个运算在这次特定的运行里消耗了大概这么长时间。而它是不是总是以这样的速度运行。你不知道引擎或系统在这个时候有没有受到什么影响，以及其他时候这个运算会不会运行得更快。<br><br>如果时长报告是4呢？你能确定它的运行需要大概4ms吗？不能。它消耗的时间可能要短一些，而且在获得start或end时间戳之间也可能有其他一些延误。<br><br>更麻烦的是，你也不知道这个运算测试的环境是否过度优化了。有可能JavaScript引擎找到了什么方法来优化你这个独立的测试用例，但在更真实的程序中是无法进行这样的优化的，那么这个运算就会比测试时跑得慢。<br><br>那么，能知道的是什么呢？很遗憾，根据前面提出的内容，我们几乎一无所知。这样低置信度的测试几乎无力支持你的任何决策。这个性能测试基本上是无用的。更坏的是，它是危险的，因为它可能提供了错误的置信度。<br><br>你现在会说，“那就用一个循环把它包起来，这样整个测试的运行时间就会更长一些了。”如果重复一个运算100次，然后整个循环报告共消耗了137ms，那你就可以把它除以100，得到每次运算的平均用时为1.37ms，是这样吗？<br><br>并不完全是这样。<br><br>简单的数学平均值绝对不足以对你要外推到整个应用范围的性能作出判断。迭代100次，即使只有几个（过高或过低的）的异常值也可以影响整个平均值，然后在重复应用这个结论的时候，你还会扩散这个误差，产生更大的欺骗性。<br><br>你也可以不以固定次数执行运算，转而循环运行测试，直到达到某个固定的时间。这可能会更可靠一些，但如何确定要执行多长时间呢？你可能会猜测，执行时间应该是你的运算执行的单次时长的若干倍。错。<br><br>实际上，重复执行的时间长度应该根据使用的定时器的精度而定，专门用来最小化不精确性。定时器的精度越低，你需要运行的时间就越长，这样才能确保错误率最小化。15ms的定时器对于精确的性能测试来说是非常差劲的。要最小化它的不确定性（也就是出错率）到小于1%，需要把你的每轮测试迭代运行750ms。而1ms定时器只需要每轮运行50ms就可以达到同样的置信度。<br><br>但是，这只是单独的一个例子。要确保把异常因素排除，你需要大量的样本来平均化。你还会想要知道最差样本有多慢，最好的样本有多快，以及最好和最差情况之间的偏离度有多大，等等。你需要知道的不仅仅是一个告诉你某个东西跑得有多快的数字，还需要得到某个可以计量的测量值告诉你这个数字的可信度有多高。<br><br>还有，你可能会想要把不同的技术（以及其他方面）组合起来，以得到所有可能方法的最佳平衡。<br></div></blockquote>
+<p><strong>使用 benchmark.js</strong></p>
+<p>benchmark.js 是专门用来做基准测试的。基本的API可以参考<a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">文档</a>。 </p>
+<p>假如要测试 <code>Date.now()</code>, <code>new Date().getTime()</code>, <code>Date.parse(new Date())</code> 哪个最快 (当然这个测试没什么意义，只是做个例子):</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line"><span class="comment">// add tests</span></span><br><span class="line">suite</span><br><span class="line">  .add(<span class="string">'Date.now()'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> a = <span class="built_in">Date</span>.now();</span><br><span class="line">  &#125;)</span><br><span class="line">  .add(<span class="string">'new Date().getTime():'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> a = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime();</span><br><span class="line">  &#125;)</span><br><span class="line">  .add(<span class="string">'Date.parse(new Date())'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> a = <span class="built_in">Date</span>.parse(<span class="keyword">new</span> <span class="built_in">Date</span>());</span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="comment">// add listeners</span></span><br><span class="line">  .on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">  &#125;)</span><br><span class="line">  .on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Slowest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'slowest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="comment">// run async</span></span><br><span class="line">  .run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure>
+<p>运行后结果如下，其中 ops/sec 是指每秒执行的操作数，数字越大就越快。后面的正负数字是统计误差。括号里显示的大概是运行的样本数。</p>
+<img src="/blog/2018/02/23/benchmark/bench_suite.png" title="This is an example image">
+<p>可见 <code>Date.now()</code> 最快，<code>Date.parse(new Date())</code> 是最慢的。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cjdzzdkix00028vemyne4h4rb" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/blog/2018/02/16/react-ssr/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">react ssr basic</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/02/23/benchmark/">基准测试-用benchmark.js分析代码性能</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/16/react-ssr/">react ssr basic</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/28/preact-4/">preact 源码(4)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
