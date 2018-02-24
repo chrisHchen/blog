@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>写一个 webpack loader | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="什么是 loader “A loader is a node module that exports a function”首先 loader 是一个 nodejs 的模块，然后这个模块需要 exports 一个 function。这个 function 可以通过 this 上下文获得 Loader API 上的数据。同时 function 通常应该返回一个 javascript 字符串。">
+<meta name="keywords" content="webpack">
+<meta property="og:type" content="article">
+<meta property="og:title" content="写一个 webpack loader">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/02/24/wp-loader/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="什么是 loader “A loader is a node module that exports a function”首先 loader 是一个 nodejs 的模块，然后这个模块需要 exports 一个 function。这个 function 可以通过 this 上下文获得 Loader API 上的数据。同时 function 通常应该返回一个 javascript 字符串。">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https://chrishchen.github.io/blog/2018/02/24/wp-loader/loader.png">
+<meta property="og:updated_time" content="2018-02-24T09:56:13.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="写一个 webpack loader">
+<meta name="twitter:description" content="什么是 loader “A loader is a node module that exports a function”首先 loader 是一个 nodejs 的模块，然后这个模块需要 exports 一个 function。这个 function 可以通过 this 上下文获得 Loader API 上的数据。同时 function 通常应该返回一个 javascript 字符串。">
+<meta name="twitter:image" content="https://chrishchen.github.io/blog/2018/02/24/wp-loader/loader.png">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-wp-loader" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/02/24/wp-loader/" class="article-date">
+  <time datetime="2018-02-24T07:48:44.000Z" itemprop="datePublished">2018-02-24</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      写一个 webpack loader
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><strong>什么是 loader</strong></p>
+<p><em><a href="https://webpack.js.org/contribute/writing-a-loader/" target="_blank" rel="noopener">“A loader is a node module that exports a function”</a></em><br>首先 loader 是一个 nodejs 的模块，然后这个模块需要 exports 一个 function。这个 function 可以通过 <code>this</code> 上下文获得 <a href="https://webpack.js.org/api/loaders/" target="_blank" rel="noopener">Loader API</a> 上的数据。同时 function 通常应该返回一个 javascript 字符串。</p>
+<a id="more"></a>
+<p><strong>sync/async</strong></p>
+<p>sync loader 可以直接返回转义后的js字符串。async loader 需要调用 <code>this.async()</code> 来指明需要等待一个异步的结果，<code>this.async()</code> 返回 <code>this.callback</code> 函数，之后 async loader 必须 return undefined 并通过 callback 来返回转义后的js。</p>
+<p>例子:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span>(<span class="params">source</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> callback = <span class="keyword">this</span>.async();</span><br><span class="line">  fetch().then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    callback(<span class="literal">null</span>, <span class="string">`export default <span class="subst">$&#123;source&#125;</span>`</span>);</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><strong>链式调用</strong></p>
+<p>loader 是可以链式调用的。调用的顺序是逆序调用，也就是最后的loader先执行，最前的loader最后执行。最后的 loader 会接收源代码内容作为参数，其他load都接收前一个 loader 的返回值作为参数。最前的loader执行后返回一个js字符串做为最终的返回结果。</p>
+<p><strong>一个简单的例子</strong><br>假如要写2个转义js的loader：</p>
+<ul>
+<li>comment-loader: 在代码前加一个作者的注释</li>
+<li>logtime-loader: 在每个 console.log 语句前面加一个 console.log(Date.now())</li>
+</ul>
+<p><em>webpack.config.js</em></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> &#123;</span><br><span class="line">  entry: path.resolve(__dirname, <span class="string">'index.js'</span>),</span><br><span class="line">  output: &#123;</span><br><span class="line">    path: path.resolve(__dirname, <span class="string">'dist'</span>),</span><br><span class="line">    filename: <span class="string">'bundle.js'</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="built_in">module</span>: &#123;</span><br><span class="line">    rules: [&#123;</span><br><span class="line">      test: <span class="regexp">/\.js$/</span>,</span><br><span class="line">      exclude: <span class="regexp">/(node_modules|bower_components)/</span>,</span><br><span class="line">      use: [</span><br><span class="line">        &#123;</span><br><span class="line">          loader: path.resolve(__dirname, <span class="string">'./src/logtime-loader.js'</span>),</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          loader: <span class="string">'babel-loader'</span>,</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          loader: path.resolve(__dirname, <span class="string">'./src/comment-loader.js'</span>),</span><br><span class="line">          options: &#123;</span><br><span class="line">            name: <span class="string">'Chris'</span></span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里 <code>comment-loader</code> 带有 options。待会会用 loader-utils 来获取这个参数作为作者的名字。</p>
+<p><em>src/comment-loader.js</em></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; getOptions &#125; <span class="keyword">from</span> <span class="string">'loader-utils'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> (<span class="params">source</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> options = getOptions(<span class="keyword">this</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="string">`/*author:<span class="subst">$&#123;options.name&#125;</span>*/\n<span class="subst">$&#123;source&#125;</span>`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>src/logtime-loader.js</em></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> (<span class="params">source</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> re = <span class="regexp">/console\.log\([\w\W]*?\)/mg</span></span><br><span class="line">  <span class="keyword">const</span> newSource = source.replace(re, <span class="function"><span class="keyword">function</span>(<span class="params">matched</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">`console.log(<span class="subst">$&#123;<span class="built_in">Date</span>.now()&#125;</span>)\n  <span class="subst">$&#123;matched&#125;</span>`</span></span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="keyword">return</span> newSource</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>index.js</em><br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">let</span> a = <span class="number">0</span>, i = <span class="number">100</span></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'start loop'</span>)</span><br><span class="line">  <span class="keyword">while</span>(i)&#123;</span><br><span class="line">    a = a+i;</span><br><span class="line">    i--;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'end loop'</span>)</span><br><span class="line">  <span class="keyword">return</span> a;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>执行 <code>webpack</code> 命令后在 <code>dist</code> 目录下生成了 bundle.js 文件。可以在 bundle.js 中看到转义后的js代码如下:</p>
+<img src="/blog/2018/02/24/wp-loader/loader.png" title="This is an example image">
+<p>除了 webpack 添加的部分模块转换代码之外，可以看到注释已经被添加进去，而且原本出现console.log() 的地方也加上了 console.log(Date.now())。</p>
+<p>这是一个最基本的例子，更多的用法可以参照 loader 的<a href="https://webpack.js.org/contribute/writing-a-loader/" target="_blank" rel="noopener">文档</a>来进行尝试。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cje12iuzf000c946r4rwfw4b0" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/blog/2018/02/23/benchmark/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">基准测试-用benchmark.js分析代码性能</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/webpack/" style="font-size: 10px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/02/24/wp-loader/">写一个 webpack loader</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/23/benchmark/">基准测试-用benchmark.js分析代码性能</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/16/react-ssr/">react ssr basic</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
