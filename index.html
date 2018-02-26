@@ -62,6 +62,51 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-chrome-launcher" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/02/26/chrome-launcher/" class="article-date">
+  <time datetime="2018-02-26T09:03:57.000Z" itemprop="datePublished">2018-02-26</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/blog/2018/02/26/chrome-launcher/">chrome-launcher</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="https://github.com/GoogleChrome/chrome-launcher" target="_blank" rel="noopener">chrome-launcher</a> 提供了简单的 api 使得从 node 启动 chrome 变得非常容易。</p>
+<p>整个项目最终只是简单的用 <code>child_process.spawn</code> 方法来开启了一个 detached 的子进程：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> chrome = <span class="keyword">this</span>.spawn(</span><br><span class="line">  execPath, </span><br><span class="line">  <span class="keyword">this</span>.flags,</span><br><span class="line">  &#123;</span><br><span class="line">    detached: <span class="literal">true</span>, </span><br><span class="line">    stdio: [<span class="string">'ignore'</span>, <span class="keyword">this</span>.outFile, <span class="keyword">this</span>.errFile], </span><br><span class="line">    env: <span class="keyword">this</span>.envVars</span><br><span class="line">  &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+        
+          <p class="article-more-link">
+            <a href="/blog/2018/02/26/chrome-launcher/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/" data-id="cje3zzp6x00005e6r5cq4uz6x" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/chrome/">chrome</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-wp-plugin" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/blog/2018/02/25/wp-plugin/" class="article-date">
@@ -101,7 +146,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/25/wp-plugin/" data-id="cje29gbjz000hw5em0cpk350k" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/25/wp-plugin/" data-id="cje3zzp85000o5e6rmknavyyq" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
@@ -145,7 +190,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cje29gbjx000ew5emdo05jyd2" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cje3zzp88000p5e6r3ye4yurn" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
@@ -190,7 +235,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cje29gbjh0000w5emqwjj332v" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cje3zzp7a00035e6rvh9bmc7n" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
@@ -225,7 +270,7 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p><strong>现有的成熟解决方案</strong></p>
-<p><a href="https://github.com/zeit/next.js" target="_blank" rel="noopener">next.js</a><br><a href="https://github.com/jamiebuilds/react-loadable" target="_blank" rel="noopener">react-loadable</a><br><a href="https://github.com/faceyspacey/react-universal-component/" target="_blank" rel="noopener">react-universal-component</a><br><a href="https://github.com/kriasoft/isomorphic-style-loader" target="_blank" rel="noopener">isomorphic-style-loader</a><br><a href="https://github.com/kriasoft/universal-router/" target="_blank" rel="noopener">universal-router</a><br>
+<p><a href="https://github.com/zeit/next.js" target="_blank" rel="noopener">next.js</a><br><a href="https://github.com/jamiebuilds/react-loadable" target="_blank" rel="noopener">react-loadable</a><br><a href="https://github.com/faceyspacey/react-universal-component/" target="_blank" rel="noopener">react-universal-component</a><br><a href="https://github.com/kriasoft/isomorphic-style-loader" target="_blank" rel="noopener">isomorphic-style-loader</a><br><a href="https://github.com/kriasoft/universal-router/" target="_blank" rel="noopener">universal-router</a><br><a href="https://github.com/nozzle/react-static" target="_blank" rel="noopener">react-static</a> (static site only)<br>
         
           <p class="article-more-link">
             <a href="/blog/2018/02/16/react-ssr/#more">Read More</a>
@@ -234,7 +279,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/16/react-ssr/" data-id="cje29gbjw000cw5emvogbdi6j" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/16/react-ssr/" data-id="cje3zzp7i000c5e6rcx5zvbbp" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li></ul>
@@ -282,7 +327,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/03/preact-6/" data-id="cje29gbju0009w5emeq0nm0b5" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/03/preact-6/" data-id="cje3zzp7g00095e6riednflkv" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -331,7 +376,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/29/preact-5/" data-id="cje29gbjs0008w5emn52vbsf2" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/29/preact-5/" data-id="cje3zzp7e00085e6rkvajb1rw" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -379,7 +424,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-4/" data-id="cje29gbjr0005w5emz4zzhgd9" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-4/" data-id="cje3zzp7j000e5e6rofeeno2p" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -424,7 +469,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-3/" data-id="cje29gbjq0004w5emettofv8d" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-3/" data-id="cje3zzp7d00055e6r0184mll3" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -469,51 +514,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/21/preact-2/" data-id="cje29gbjo0003w5em0rqum94t" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-preact-1" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/01/20/preact-1/" class="article-date">
-  <time datetime="2018-01-20T13:59:43.000Z" itemprop="datePublished">2018-01-20</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/01/20/preact-1/">preact 源码(1)</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><a href="https://preactjs.com/" target="_blank" rel="noopener">Preact</a> 是一个只有 3kb 的 react 替代库。Preact 有 90% 的 API 是和 react 兼容的。所以用 preact 来开发对于熟悉 react 的人来说是非常方便的。</p>
-<p>Preact 整个项目是用 rollup 来构建，构建的配置文件在 <code>config/rollup.config.js</code>, 入口文件是 <code>src/preact.js</code><br>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/01/20/preact-1/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/20/preact-1/" data-id="cje29gbjl0001w5emf0ttatc1" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/21/preact-2/" data-id="cje3zzp7c00045e6ru5en118v" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -526,6 +527,11 @@
 
   
 
+
+  <nav id="page-nav">
+    
+    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><a class="extend next" rel="next" href="/blog/page/2/">weiter &raquo;</a>
+  </nav>
 
 </section>
         
@@ -538,7 +544,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
     </div>
   </div>
 
@@ -548,7 +554,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
     </div>
   </div>
 
@@ -570,6 +576,10 @@
       <ul>
         
           <li>
+            <a href="/blog/2018/02/26/chrome-launcher/">chrome-launcher</a>
+          </li>
+        
+          <li>
             <a href="/blog/2018/02/25/wp-plugin/">写一个 webpack plugin</a>
           </li>
         
@@ -583,10 +593,6 @@
         
           <li>
             <a href="/blog/2018/02/16/react-ssr/">react ssr basic</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
           </li>
         
       </ul>

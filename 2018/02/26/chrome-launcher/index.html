@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>chrome-launcher | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="chrome-launcher 提供了简单的 api 使得从 node 启动 chrome 变得非常容易。 整个项目最终只是简单的用 child_process.spawn 方法来开启了一个 detached 的子进程： 123456789const chrome = this.spawn(  execPath,   this.flags,  &amp;#123;    detached: true,">
+<meta name="keywords" content="chrome">
+<meta property="og:type" content="article">
+<meta property="og:title" content="chrome-launcher">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="chrome-launcher 提供了简单的 api 使得从 node 启动 chrome 变得非常容易。 整个项目最终只是简单的用 child_process.spawn 方法来开启了一个 detached 的子进程： 123456789const chrome = this.spawn(  execPath,   this.flags,  &amp;#123;    detached: true,">
+<meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2018-02-26T14:57:29.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="chrome-launcher">
+<meta name="twitter:description" content="chrome-launcher 提供了简单的 api 使得从 node 启动 chrome 变得非常容易。 整个项目最终只是简单的用 child_process.spawn 方法来开启了一个 detached 的子进程： 123456789const chrome = this.spawn(  execPath,   this.flags,  &amp;#123;    detached: true,">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/blog/favicon.ico">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-chrome-launcher" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/02/26/chrome-launcher/" class="article-date">
+  <time datetime="2018-02-26T09:03:57.000Z" itemprop="datePublished">2018-02-26</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      chrome-launcher
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="https://github.com/GoogleChrome/chrome-launcher" target="_blank" rel="noopener">chrome-launcher</a> 提供了简单的 api 使得从 node 启动 chrome 变得非常容易。</p>
+<p>整个项目最终只是简单的用 <code>child_process.spawn</code> 方法来开启了一个 detached 的子进程：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> chrome = <span class="keyword">this</span>.spawn(</span><br><span class="line">  execPath, </span><br><span class="line">  <span class="keyword">this</span>.flags,</span><br><span class="line">  &#123;</span><br><span class="line">    detached: <span class="literal">true</span>, </span><br><span class="line">    stdio: [<span class="string">'ignore'</span>, <span class="keyword">this</span>.outFile, <span class="keyword">this</span>.errFile], </span><br><span class="line">    env: <span class="keyword">this</span>.envVars</span><br><span class="line">  &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>spawn 方法中的参数 <code>execPath</code> 是通过 <code>chrome-finder.ts</code> 根据不同的平台来获得的，<code>flags</code> 中包含了很多默认的参数(在flags.ts中定义)，最主要的参数是 <code>--remote-debugging-port=this.port</code> 其中 port 是通过 <code>getRandomPort</code> 方法获得的。outFile 和 errFile 是两个临时目录里生成的fd，：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.userDataDir = <span class="keyword">this</span>.userDataDir || <span class="keyword">this</span>.makeTmpDir();</span><br><span class="line"><span class="keyword">this</span>.outFile = <span class="keyword">this</span>.fs.openSync(<span class="string">`<span class="subst">$&#123;<span class="keyword">this</span>.userDataDir&#125;</span>/chrome-out.log`</span>, <span class="string">'a'</span>);</span><br><span class="line"><span class="keyword">this</span>.errFile = <span class="keyword">this</span>.fs.openSync(<span class="string">`<span class="subst">$&#123;<span class="keyword">this</span>.userDataDir&#125;</span>/chrome-err.log`</span>, <span class="string">'a'</span>);</span><br></pre></td></tr></table></figure>
+<p>另外，值得留意的是选取一个未被使用的随机端口的方法:<br><a href="https://nodejs.org/api/net.html#net_server_listen_port_host_backlog_callback" target="_blank" rel="noopener">net.server doc</a><br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Return a random, unused port.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">getRandomPort</span>(<span class="params"></span>): <span class="title">Promise</span>&lt;<span class="title">number</span>&gt; </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> server = createServer();</span><br><span class="line">    server.listen(<span class="number">0</span>);</span><br><span class="line">    server.once(<span class="string">'listening'</span>, () =&gt; &#123;</span><br><span class="line">      <span class="keyword">const</span> port = server.address().port;</span><br><span class="line">      server.close(<span class="function"><span class="params">()</span> =&gt;</span> resolve(port));</span><br><span class="line">    &#125;);</span><br><span class="line">    server.once(<span class="string">'error'</span>, reject);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>给 listen 方法传0或不传值，node就会任意选取一个未被使用的端口来监听。</p>
+<p>还有一个值得留意的地方是 <code>chrome-finder.ts</code> 在寻找chrome execPath 时判断文件是否存在的方法，用的是 <a href="https://nodejs.org/api/fs.html#fs_fs_accesssync_path_mode" target="_blank" rel="noopener">fs.accesssync</a> 不带 mode 参数的形式:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">canAccess</span>(<span class="params">file: string</span>): <span class="title">Boolean</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!file) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    fs.accessSync(file);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外代码中还涉及到 <code>grep</code> 和 <code>awk</code> 的用法。搜了两个教程简单看下<br><a href="https://www.tutorialspoint.com/awk/index.htm" target="_blank" rel="noopener">awk-tutorial</a><br><a href="http://blog.jobbole.com/109089/" target="_blank" rel="noopener">awk-tutorial 中文</a><br><a href="https://www.cnblogs.com/xingzc/p/5781923.html" target="_blank" rel="noopener">grep -E</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/" data-id="cje3zzp6x00005e6r5cq4uz6x" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/chrome/">chrome</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/blog/2018/02/25/wp-plugin/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">写一个 webpack plugin</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/02/26/chrome-launcher/">chrome-launcher</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/25/wp-plugin/">写一个 webpack plugin</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/24/wp-loader/">写一个 webpack loader</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/23/benchmark/">基准测试-用benchmark.js分析代码性能</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/16/react-ssr/">react ssr basic</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
