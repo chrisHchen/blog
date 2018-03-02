@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>fastdom | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout Thrashi">
+<meta name="keywords" content="web">
+<meta property="og:type" content="article">
+<meta property="og:title" content="fastdom">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/03/02/fastdom/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout Thrashi">
+<meta property="og:locale" content="cn">
+<meta property="og:image" content="https://chrishchen.github.io/blog/2018/03/02/fastdom/frame.jpg">
+<meta property="og:updated_time" content="2018-03-02T03:48:45.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="fastdom">
+<meta name="twitter:description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout Thrashi">
+<meta name="twitter:image" content="https://chrishchen.github.io/blog/2018/03/02/fastdom/frame.jpg">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/blog/favicon.ico">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-fastdom" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/03/02/fastdom/" class="article-date">
+  <time datetime="2018-03-02T02:40:33.000Z" itemprop="datePublished">2018-03-02</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      fastdom
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>浏览器渲染一个页面通常需要如下的步骤:</p>
+<img src="/blog/2018/03/02/fastdom/frame.jpg" title="This is an example image">
+<p>其中的 layout 有时候也称为 reflow。</p>
+<p>其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章:</p>
+<p><a href="https://developers.google.com/web/fundamentals/performance/rendering/avoid-large-complex-layouts-and-layout-thrashing" target="_blank" rel="noopener">Avoid Large, Complex Layouts and Layout Thrashing</a></p>
+<p><a href="https://github.com/wilsonpage/fastdom" target="_blank" rel="noopener">fastdom</a> 就是为了优化 layout，防止出现 forced synchronous layouts 的一个js库。</p>
+<p>源码比较简单，首先 fastdom 库是一个全局单例的库:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> exports = win.fastdom = (win.fastdom || <span class="keyword">new</span> FastDom());</span><br></pre></td></tr></table></figure>
+<p>通过管理单例上的 <code>reads</code> 和 <code>writes</code> 两个数组来缓存读(measure)写(mutate)两种操作</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">FastDom</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> self = <span class="keyword">this</span>;</span><br><span class="line">  self.reads = [];</span><br><span class="line">  self.writes = [];</span><br><span class="line">  self.raf = raf.bind(win); <span class="comment">// test hook</span></span><br><span class="line">  debug(<span class="string">'initialized'</span>, self);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过 <code>scheduleFlush</code> 函数在下一帧(<code>requestAnimationFrame</code>)执行数组中的函数 — <strong>先执行 <code>reads</code> 再执行 <code>writes</code></strong>。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// scheduleFlush</span></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    debug(<span class="string">'flushing reads'</span>, reads.length);</span><br><span class="line">    runTasks(reads);</span><br><span class="line">    debug(<span class="string">'flushing writes'</span>, writes.length);</span><br><span class="line">    runTasks(writes);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (e) &#123; error = e; &#125;</span><br></pre></td></tr></table></figure>
+<p>这样所有的读写操作都被分到不同的数组中，然后异步的统一执行，保证 js执行过程中不出现 forced synchronous layouts 的情况。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cje9cb3i30003by6rao08h546" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/web/">web</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/blog/2018/02/26/chrome-launcher/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">chrome-launcher</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/web/">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/web/" style="font-size: 10px;">web</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/03/02/fastdom/">fastdom</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/26/chrome-launcher/">chrome-launcher</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/25/wp-plugin/">写一个 webpack plugin</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/24/wp-loader/">写一个 webpack loader</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/23/benchmark/">基准测试-用benchmark.js分析代码性能</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
