@@ -7,19 +7,19 @@
   
   <title>fastdom | </title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout Thrashi">
+  <meta name="description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得浏览器的刷新频率低于60fps，出现动画卡顿的现象。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout">
 <meta name="keywords" content="web">
 <meta property="og:type" content="article">
 <meta property="og:title" content="fastdom">
 <meta property="og:url" content="https://chrishchen.github.io/blog/2018/03/02/fastdom/index.html">
 <meta property="og:site_name">
-<meta property="og:description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout Thrashi">
+<meta property="og:description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得浏览器的刷新频率低于60fps，出现动画卡顿的现象。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout">
 <meta property="og:locale" content="cn">
 <meta property="og:image" content="https://chrishchen.github.io/blog/2018/03/02/fastdom/frame.jpg">
-<meta property="og:updated_time" content="2018-03-02T03:48:45.000Z">
+<meta property="og:updated_time" content="2018-03-02T05:18:21.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="fastdom">
-<meta name="twitter:description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout Thrashi">
+<meta name="twitter:description" content="浏览器渲染一个页面通常需要如下的步骤:  其中的 layout 有时候也称为 reflow。 layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得浏览器的刷新频率低于60fps，出现动画卡顿的现象。具体的原理和细节可以参考这篇文章: Avoid Large, Complex Layouts and Layout">
 <meta name="twitter:image" content="https://chrishchen.github.io/blog/2018/03/02/fastdom/frame.jpg">
   
     <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
@@ -92,7 +92,7 @@
         <p>浏览器渲染一个页面通常需要如下的步骤:</p>
 <img src="/blog/2018/03/02/fastdom/frame.jpg" title="This is an example image">
 <p>其中的 layout 有时候也称为 reflow。</p>
-<p>其中layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得动画出现低于 60fps 的情况。具体的原理和细节可以参考这篇文章:</p>
+<p>layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得浏览器的刷新频率低于60fps，出现动画卡顿的现象。具体的原理和细节可以参考这篇文章:</p>
 <p><a href="https://developers.google.com/web/fundamentals/performance/rendering/avoid-large-complex-layouts-and-layout-thrashing" target="_blank" rel="noopener">Avoid Large, Complex Layouts and Layout Thrashing</a></p>
 <p><a href="https://github.com/wilsonpage/fastdom" target="_blank" rel="noopener">fastdom</a> 就是为了优化 layout，防止出现 forced synchronous layouts 的一个js库。</p>
 <p>源码比较简单，首先 fastdom 库是一个全局单例的库:</p>
@@ -101,12 +101,12 @@
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">FastDom</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> self = <span class="keyword">this</span>;</span><br><span class="line">  self.reads = [];</span><br><span class="line">  self.writes = [];</span><br><span class="line">  self.raf = raf.bind(win); <span class="comment">// test hook</span></span><br><span class="line">  debug(<span class="string">'initialized'</span>, self);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>通过 <code>scheduleFlush</code> 函数在下一帧(<code>requestAnimationFrame</code>)执行数组中的函数 — <strong>先执行 <code>reads</code> 再执行 <code>writes</code></strong>。</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// scheduleFlush</span></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    debug(<span class="string">'flushing reads'</span>, reads.length);</span><br><span class="line">    runTasks(reads);</span><br><span class="line">    debug(<span class="string">'flushing writes'</span>, writes.length);</span><br><span class="line">    runTasks(writes);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (e) &#123; error = e; &#125;</span><br></pre></td></tr></table></figure>
-<p>这样所有的读写操作都被分到不同的数组中，然后异步的统一执行，保证 js执行过程中不出现 forced synchronous layouts 的情况。</p>
+<p>这样所有的读写操作都被分到不同的数组中，然后异步的统一执行，保证 js执行过程中不出现 forced synchronous layouts 的现象。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cje9cb3i30003by6rao08h546" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cjeut3ehm0000el6r3w5ij4yk" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/web/">web</a></li></ul>
@@ -116,6 +116,15 @@
   
     
 <nav id="article-nav">
+  
+    <a href="/blog/2018/03/16/redux/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Neuer</strong>
+      <div class="article-nav-title">
+        
+          redux 源码分析【4.0.0-beta.2】
+        
+      </div>
+    </a>
   
   
     <a href="/blog/2018/02/26/chrome-launcher/" id="article-nav-older" class="article-nav-link-wrap">
@@ -139,7 +148,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/web/">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react/">react</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/web/">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
     </div>
   </div>
 
@@ -149,7 +158,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/web/" style="font-size: 10px;">web</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react/" style="font-size: 10px;">react</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/web/" style="font-size: 10px;">web</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
     </div>
   </div>
 
@@ -171,6 +180,10 @@
       <ul>
         
           <li>
+            <a href="/blog/2018/03/16/redux/">redux 源码分析【4.0.0-beta.2】</a>
+          </li>
+        
+          <li>
             <a href="/blog/2018/03/02/fastdom/">fastdom</a>
           </li>
         
@@ -184,10 +197,6 @@
         
           <li>
             <a href="/blog/2018/02/24/wp-loader/">写一个 webpack loader</a>
-          </li>
-        
-          <li>
-            <a href="/blog/2018/02/23/benchmark/">基准测试-用benchmark.js分析代码性能</a>
           </li>
         
       </ul>

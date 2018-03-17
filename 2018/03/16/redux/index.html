@@ -5,15 +5,20 @@
   
 
   
-  <title></title>
+  <title>redux 源码分析【4.0.0-beta.2】 | </title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title">
-<meta property="og:url" content="https://chrishchen.github.io/blog/index.html">
+  <meta name="description" content="redux 一个可预测的js状态容器（Predictable state container for JavaScript apps）。doc redux 库一共导出如下几个函数 createStore, combineReducers, bindActionCreators, applyMiddleware, compose, __DO_NOT_USE__ActionTypes。 createS">
+<meta name="keywords" content="react">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redux 源码分析【4.0.0-beta.2】">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/03/16/redux/index.html">
 <meta property="og:site_name">
+<meta property="og:description" content="redux 一个可预测的js状态容器（Predictable state container for JavaScript apps）。doc redux 库一共导出如下几个函数 createStore, combineReducers, bindActionCreators, applyMiddleware, compose, __DO_NOT_USE__ActionTypes。 createS">
 <meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2018-03-17T03:26:21.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title">
+<meta name="twitter:title" content="redux 源码分析【4.0.0-beta.2】">
+<meta name="twitter:description" content="redux 一个可预测的js状态容器（Predictable state container for JavaScript apps）。doc redux 库一共导出如下几个函数 createStore, combineReducers, bindActionCreators, applyMiddleware, compose, __DO_NOT_USE__ActionTypes。 createS">
   
     <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
   
@@ -60,9 +65,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-redux" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-redux" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/blog/2018/03/16/redux/" class="article-date">
   <time datetime="2018-03-16T02:13:24.000Z" itemprop="datePublished">2018-03-16</time>
@@ -75,8 +78,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/03/16/redux/">redux 源码分析【4.0.0-beta.2】</a>
+    <h1 class="article-title" itemprop="name">
+      redux 源码分析【4.0.0-beta.2】
     </h1>
   
 
@@ -129,441 +132,19 @@
     </footer>
   </div>
   
-</article>
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-fastdom" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/03/02/fastdom/" class="article-date">
-  <time datetime="2018-03-02T02:40:33.000Z" itemprop="datePublished">2018-03-02</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/03/02/fastdom/">fastdom</a>
-    </h1>
+    <a href="/blog/2018/03/02/fastdom/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">fastdom</div>
+    </a>
   
+</nav>
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>浏览器渲染一个页面通常需要如下的步骤:</p>
-<img src="/blog/2018/03/02/fastdom/frame.jpg" title="This is an example image">
-<p>其中的 layout 有时候也称为 reflow。</p>
-<p>layout是非常消耗性能和时间的，所以应该尽量避免js的执行产生 layout 的情况。特别是在有动画的情况下，太多的layout会使得浏览器的刷新频率低于60fps，出现动画卡顿的现象。具体的原理和细节可以参考这篇文章:</p>
-<p><a href="https://developers.google.com/web/fundamentals/performance/rendering/avoid-large-complex-layouts-and-layout-thrashing" target="_blank" rel="noopener">Avoid Large, Complex Layouts and Layout Thrashing</a></p>
-<p><a href="https://github.com/wilsonpage/fastdom" target="_blank" rel="noopener">fastdom</a> 就是为了优化 layout，防止出现 forced synchronous layouts 的一个js库。</p>
-<p>源码比较简单，首先 fastdom 库是一个全局单例的库:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> exports = win.fastdom = (win.fastdom || <span class="keyword">new</span> FastDom());</span><br></pre></td></tr></table></figure>
-<p>通过管理单例上的 <code>reads</code> 和 <code>writes</code> 两个数组来缓存读(measure)写(mutate)两种操作</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">FastDom</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> self = <span class="keyword">this</span>;</span><br><span class="line">  self.reads = [];</span><br><span class="line">  self.writes = [];</span><br><span class="line">  self.raf = raf.bind(win); <span class="comment">// test hook</span></span><br><span class="line">  debug(<span class="string">'initialized'</span>, self);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>通过 <code>scheduleFlush</code> 函数在下一帧(<code>requestAnimationFrame</code>)执行数组中的函数 — <strong>先执行 <code>reads</code> 再执行 <code>writes</code></strong>。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// scheduleFlush</span></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    debug(<span class="string">'flushing reads'</span>, reads.length);</span><br><span class="line">    runTasks(reads);</span><br><span class="line">    debug(<span class="string">'flushing writes'</span>, writes.length);</span><br><span class="line">    runTasks(writes);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (e) &#123; error = e; &#125;</span><br></pre></td></tr></table></figure>
-<p>这样所有的读写操作都被分到不同的数组中，然后异步的统一执行，保证 js执行过程中不出现 forced synchronous layouts 的现象。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cjeut3ehm0000el6r3w5ij4yk" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/web/">web</a></li></ul>
-
-    </footer>
-  </div>
   
 </article>
-
-
-  
-    <article id="post-chrome-launcher" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/02/26/chrome-launcher/" class="article-date">
-  <time datetime="2018-02-26T09:03:57.000Z" itemprop="datePublished">2018-02-26</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/02/26/chrome-launcher/">chrome-launcher</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><a href="https://github.com/GoogleChrome/chrome-launcher" target="_blank" rel="noopener">chrome-launcher</a> 提供了简单的 api 使得从 node 启动 chrome 变得非常容易。</p>
-<p>整个项目最终只是简单的用 <code>child_process.spawn</code> 方法来开启了一个 detached 的子进程：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> chrome = <span class="keyword">this</span>.spawn(</span><br><span class="line">  execPath, </span><br><span class="line">  <span class="keyword">this</span>.flags,</span><br><span class="line">  &#123;</span><br><span class="line">    detached: <span class="literal">true</span>, </span><br><span class="line">    stdio: [<span class="string">'ignore'</span>, <span class="keyword">this</span>.outFile, <span class="keyword">this</span>.errFile], </span><br><span class="line">    env: <span class="keyword">this</span>.envVars</span><br><span class="line">  &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/02/26/chrome-launcher/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/" data-id="cjeut3ehv0004el6ru9y8hh92" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/chrome/">chrome</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-wp-plugin" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/02/25/wp-plugin/" class="article-date">
-  <time datetime="2018-02-25T02:17:07.000Z" itemprop="datePublished">2018-02-25</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/02/25/wp-plugin/">写一个 webpack plugin</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>plugin 为 webpack 的使用者提供了更多自定义打包的功能。具体的内容涉及到底层的API，还是直接看官方的文档：</p>
-<ul>
-<li><a href="https://webpack.js.org/contribute/writing-a-plugin/" target="_blank" rel="noopener">write a plugin</a></li>
-<li><a href="https://webpack.js.org/api/compiler/" target="_blank" rel="noopener">compiler</a></li>
-<li><a href="https://webpack.js.org/api/compilation/" target="_blank" rel="noopener">compilation</a></li>
-<li><a href="https://webpack.js.org/api/plugins/" target="_blank" rel="noopener">plugins API</a></li>
-<li><a href="https://github.com/webpack/webpack/blob/master/lib/Compiler.js" target="_blank" rel="noopener">compiler source</a></li>
-<li><a href="https://github.com/webpack/webpack/blob/master/lib/Compilation.js" target="_blank" rel="noopener">compilation Source</a></li>
-</ul>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/02/25/wp-plugin/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/25/wp-plugin/" data-id="cjeut3ei7000jel6r3ct9zglm" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-wp-loader" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/02/24/wp-loader/" class="article-date">
-  <time datetime="2018-02-24T07:48:44.000Z" itemprop="datePublished">2018-02-24</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/02/24/wp-loader/">写一个 webpack loader</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>什么是 loader</strong></p>
-<p><em><a href="https://webpack.js.org/contribute/writing-a-loader/" target="_blank" rel="noopener">“A loader is a node module that exports a function”</a></em><br>首先 loader 是一个 nodejs 的模块，然后这个模块需要 exports 一个 function。这个 function 可以通过 <code>this</code> 上下文获得 <a href="https://webpack.js.org/api/loaders/" target="_blank" rel="noopener">Loader API</a> 上的数据。同时 function 通常应该返回一个 javascript 字符串。</p>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/02/24/wp-loader/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cjeut3ei9000mel6ra02e78ek" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-benchmark" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/02/23/benchmark/" class="article-date">
-  <time datetime="2018-02-23T13:37:03.000Z" itemprop="datePublished">2018-02-23</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/02/23/benchmark/">基准测试-用benchmark.js分析代码性能</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>如何精确的测试 javascript 的性能？或者说如何测试两段代码哪段执行的更快？<br>大多数情况下我们都会用类似如下的代码来比较执行速度:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> test = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> startTime = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime()</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> endTime = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime()</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">`duration: <span class="subst">$&#123;endTime - startTime&#125;</span>`</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这样的测试方法有什么问题呢？ 网上有个很好的答案：<br>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/02/23/benchmark/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cjeut3ehu0003el6rqnlmlhs6" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-react-ssr" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/02/16/react-ssr/" class="article-date">
-  <time datetime="2018-02-16T13:59:43.000Z" itemprop="datePublished">2018-02-16</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/02/16/react-ssr/">react ssr basic</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>现有的成熟解决方案</strong></p>
-<p><a href="https://github.com/zeit/next.js" target="_blank" rel="noopener">next.js</a><br><a href="https://github.com/jamiebuilds/react-loadable" target="_blank" rel="noopener">react-loadable</a><br><a href="https://github.com/faceyspacey/react-universal-component/" target="_blank" rel="noopener">react-universal-component</a><br><a href="https://github.com/kriasoft/isomorphic-style-loader" target="_blank" rel="noopener">isomorphic-style-loader</a><br><a href="https://github.com/kriasoft/universal-router/" target="_blank" rel="noopener">universal-router</a><br><a href="https://github.com/nozzle/react-static" target="_blank" rel="noopener">react-static</a> (static site only)<br>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/02/16/react-ssr/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/16/react-ssr/" data-id="cjeut3eib000oel6r84d7fnyx" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-preact-6" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/02/03/preact-6/" class="article-date">
-  <time datetime="2018-02-03T14:00:18.000Z" itemprop="datePublished">2018-02-03</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/02/03/preact-6/">preact 源码(总结篇)</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <hr>
-<p><strong>diff 做了什么？</strong> </p>
-<p>用作者的原话就是:<br><blockquote><p>Apply differences in a given vnode (and it’s deep children) to a real DOM Node.</p>
-</blockquote></p>
-<p>其中的 <strong>differences</strong> 本质上其实是 <code>component</code> 实例的 <code>base</code> 属性和 component 实例的 <code>render</code> 方法执行后返回的 <code>vnode</code> 之间的 difference。 其中<code>base</code> 属性就是上一次 diff 后生成的 Dom 节点。 所以就是用上次的 dom 和本次的 vnode 做 difference/diff。两种状态作比较，通过 diff 方法内的一整套规则，用最小的代价来做更新。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">diff(dom, vnode, context, mountAll, parent, componentRoot)</span><br></pre></td></tr></table></figure>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/02/03/preact-6/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/03/preact-6/" data-id="cjeut3ei4000eel6ravvf528p" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-preact-5" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/01/29/preact-5/" class="article-date">
-  <time datetime="2018-01-29T14:00:18.000Z" itemprop="datePublished">2018-01-29</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/01/29/preact-5/">preact 源码(5)</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>createComponent 方法</strong></p>
-<p>这个方法进行 component 实例的初始化工作</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createComponent</span>(<span class="params">Ctor, props, context</span>)</span></span><br><span class="line"><span class="function">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>第一个参数是 component 构造函数。<br>第二个参数是初始化 props，一般把 vnode 的 attribute 和 component 的 defaultProps 做 merge 后获得。</p>
-<p>通过 <code>Ctor.prototype.render</code> 是否存在判断是否是 PFC，然后给 PFC 加上一个 render 函数：</p>
-<p>下面是对 PFC 的实例化过程：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">inst = <span class="keyword">new</span> Component(props, context);</span><br><span class="line">inst.constructor = Ctor;</span><br><span class="line">inst.render = doRender;</span><br><span class="line">...</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">doRender</span>(<span class="params">props, state, context</span>) </span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">this</span>.constructor(props, context);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>从中可以看出 preact 的 PFC 是通过 new 实例化的，所以也是有 instance 的。既然有instance就可以使用 ref，这也是和 react 不同的地方。看下面的例子:<br>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/01/29/preact-5/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/29/preact-5/" data-id="cjeut3ei2000cel6rrofigbl2" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-preact-4" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/01/28/preact-4/" class="article-date">
-  <time datetime="2018-01-28T10:00:18.000Z" itemprop="datePublished">2018-01-28</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/01/28/preact-4/">preact 源码(4)</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>buildComponentFromVNode方法</strong></p>
-<p>这是上篇没有展开的一个方法。<br>preact 通过 <code>buildComponentFromVNode(dom, vnode, context, mountAll)</code> 进行 component diff。</p>
-<p>组件是 react/preact 的基本思想。所有的组件都会通过 <code>buildComponentFromVNode</code> 方法来初始化 dom 或者diff dom。 <code>buildComponentFromVNode</code> 方法决定了本次 diff 是重用已有的 component 还是新建 component。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">buildComponentFromVNode</span>(<span class="params">dom, vnode, context, mountAll</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>第一个参数 dom 是需要 diff 的 dom 节点。第二个参数是对应的 vnode。这里的 vnode.nodeName 为 component 的构造函数。</p>
-<p>方法首先通过 <code>vnode.attributes</code> 和 <code>vnode.nodeName.defaultProps</code> 获得 component 实例的 props 参数。<br>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/01/28/preact-4/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-4/" data-id="cjeut3ei10009el6rc8qk6c2u" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-
-
-  <nav id="page-nav">
-    
-    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><a class="extend next" rel="next" href="/blog/page/2/">weiter &raquo;</a>
-  </nav>
 
 </section>
         
