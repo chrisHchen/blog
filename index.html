@@ -49,9 +49,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Buscar"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
@@ -61,6 +61,53 @@
 </header>
       <div class="outer">
         <section id="main">
+  
+    <article id="post-react-redux" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/03/18/react-redux/" class="article-date">
+  <time datetime="2018-03-18T05:23:23.000Z" itemprop="datePublished">2018-03-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/blog/2018/03/18/react-redux/">react-redux 源码分析 [v5.0.7]</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>进入源码之前先看一下 npm script 里用于打包的几个命令：<br>其中 umd 模块是用的 rollup 打包 ： <code>build:umd:min</code> 和 <code>build:umd</code><br>而 es 模块 和 commonjs 模块都是用的 babel直接打包: <code>build:es</code> 和 <code>build:commonjs</code>。</p>
+<p>其中的 <code>BABEL_ENV</code> 环境变量会对应到 <code>.babelrc</code> 的 <code>env</code> 属性，对每个不同的 <code>BABEL_ENV</code> 会配置不同的 babel plugins。<br>当 <code>BABEL_ENV = rollup</code> 时，由于 rollup 用到了 <code>rollup-plugin-babel</code> 所以最终还是会定位到 <code>.babelrc</code>, 并且此时 <code>env=rollup</code>。</p>
+<p>打包的入口为 <code>src/index.js</code>, 它导出了一个对象：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> &#123; Provider, createProvider, connectAdvanced, connect &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Provider"><a href="#Provider" class="headerlink" title="Provider"></a><strong>Provider</strong></h3>
+        
+          <p class="article-more-link">
+            <a href="/blog/2018/03/18/react-redux/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/03/18/react-redux/" data-id="cjewd8pq0000bg8emjq9u1w1n" class="article-share-link">Compartir</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/redux/">redux</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
   
     <article id="post-redux" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
@@ -86,45 +133,19 @@
       
         <p><strong>redux</strong> 一个可预测的js状态容器（Predictable state container for JavaScript apps）。<br><a href="http://redux.js.org" target="_blank" rel="noopener">doc</a></p>
 <p>redux 库一共导出如下几个函数 <code>createStore</code>, <code>combineReducers</code>, <code>bindActionCreators</code>, <code>applyMiddleware</code>, <code>compose</code>, <code>__DO_NOT_USE__ActionTypes</code>。</p>
-<h3 id="createStore"><a href="#createStore" class="headerlink" title="createStore"></a><strong>createStore</strong></h3><p><code>createStore</code> 接受三个参数：<code>reducer</code>, <code>preloadedState</code>, <code>enhancer</code></p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Creates a Redux store that holds the state tree.</span></span><br><span class="line"><span class="comment"> * The only way to change the data in the store is to call `dispatch()` on it.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * There should only be a single store in your app. To specify how different</span></span><br><span class="line"><span class="comment"> * parts of the state tree respond to actions, you may combine several reducers</span></span><br><span class="line"><span class="comment"> * into a single reducer function by using `combineReducers`.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param &#123;Function&#125; reducer A function that returns the next state tree, given</span></span><br><span class="line"><span class="comment"> * the current state tree and the action to handle.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param &#123;any&#125; [preloadedState] The initial state. You may optionally specify it</span></span><br><span class="line"><span class="comment"> * to hydrate the state from the server in universal apps, or to restore a</span></span><br><span class="line"><span class="comment"> * previously serialized user session.</span></span><br><span class="line"><span class="comment"> * If you use `combineReducers` to produce the root reducer function, this must be</span></span><br><span class="line"><span class="comment"> * an object with the same shape as `combineReducers` keys.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param &#123;Function&#125; [enhancer] The store enhancer. You may optionally specify it</span></span><br><span class="line"><span class="comment"> * to enhance the store with third-party capabilities such as middleware,</span></span><br><span class="line"><span class="comment"> * time travel, persistence, etc. The only store enhancer that ships with Redux</span></span><br><span class="line"><span class="comment"> * is `applyMiddleware()`.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @returns &#123;Store&#125; A Redux store that lets you read the state, dispatch actions</span></span><br><span class="line"><span class="comment"> * and subscribe to changes.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">createStore</span>(<span class="params">reducer, preloadedState, enhancer</span>) </span>&#123;</span><br><span class="line">   ...</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
-<p>并最终返回一个 state 对象：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">// When a store is created, an "INIT" action is dispatched so that every</span></span><br><span class="line"><span class="comment">// reducer returns their initial state. This effectively populates</span></span><br><span class="line"><span class="comment">// the initial state tree.</span></span><br><span class="line">dispatch(&#123; <span class="attr">type</span>: ActionTypes.INIT &#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> &#123;</span><br><span class="line">  dispatch,</span><br><span class="line">  subscribe,</span><br><span class="line">  getState,</span><br><span class="line">  replaceReducer,</span><br><span class="line">  [$$observable]: observable</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>subscribe</code> 函数：接受一个 listener 参数，然后将其推入 listener 数组 <code>nextListeners.push(listener)</code>，<br>最终返回一个 <code>unsubscribe</code> 函数来解除订阅。</p>
-<p><code>dispatch</code> 函数：接受一个 action 参数，action 最好是可序列化的对象，并且必须有一个非 <code>undefined</code> 的 <code>type</code> 属性 。</p>
-<p><code>dispatch</code> 函数主要做两件事情：</p>
-<ol>
-<li>执行 reducer，返回新的 state tree。</li>
-<li>通知(执行)订阅的 listeners。</li>
-</ol>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  isDispatching = <span class="literal">true</span></span><br><span class="line">  currentState = currentReducer(currentState, action)</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">  isDispatching = <span class="literal">false</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> listeners = (currentListeners = nextListeners)</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; listeners.length; i++) &#123;</span><br><span class="line">  <span class="keyword">const</span> listener = listeners[i]</span><br><span class="line">  listener()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>replaceReducer</code>函数：接受一个新的 reducer 来替换老的 reducer, 主要用在 code splitting 和 hot reloading 的情况下</p>
-<p><code>observable</code>函数: 这个函数可以认为是对接 observable/reactive 类库的接口，比如 RxJS。<br>关于observable 可以看下这篇文章:<a href="https://zhuanlan.zhihu.com/p/27776484" target="_blank" rel="noopener">RxJS: 如何从头开始创建 Observable</a></p>
-<h3 id="combineReducers"><a href="#combineReducers" class="headerlink" title="combineReducers"></a><strong>combineReducers</strong></h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Turns an object whose values are different reducer functions, into a single</span></span><br><span class="line"><span class="comment"> * reducer function. It will call every child reducer, and gather their results</span></span><br><span class="line"><span class="comment"> * into a single state object, whose keys correspond to the keys of the passed</span></span><br><span class="line"><span class="comment"> * reducer functions.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param &#123;Object&#125; reducers An object whose values correspond to different</span></span><br><span class="line"><span class="comment"> * reducer functions that need to be combined into one. One handy way to obtain</span></span><br><span class="line"><span class="comment"> * it is to use ES6 `import * as reducers` syntax. The reducers may never return</span></span><br><span class="line"><span class="comment"> * undefined for any action. Instead, they should return their initial state</span></span><br><span class="line"><span class="comment"> * if the state passed to them was undefined, and the current state for any</span></span><br><span class="line"><span class="comment"> * unrecognized action.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @returns &#123;Function&#125; A reducer function that invokes every reducer inside the</span></span><br><span class="line"><span class="comment"> * passed object, and builds a state object with the same shape.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">combineReducers</span>(<span class="params">reducers</span>) </span>&#123;</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>最终返回的是结合后的 reducer ：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">combination</span>(<span class="params">state = &#123;&#125;, action</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  <span class="keyword">let</span> hasChanged = <span class="literal">false</span></span><br><span class="line">  <span class="keyword">const</span> nextState = &#123;&#125;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; finalReducerKeys.length; i++) &#123;</span><br><span class="line">    <span class="keyword">const</span> key = finalReducerKeys[i]</span><br><span class="line">    <span class="keyword">const</span> reducer = finalReducers[key]</span><br><span class="line">    <span class="keyword">const</span> previousStateForKey = state[key]</span><br><span class="line">    <span class="keyword">const</span> nextStateForKey = reducer(previousStateForKey, action)</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> nextStateForKey === <span class="string">'undefined'</span>) &#123;</span><br><span class="line">      <span class="keyword">const</span> errorMessage = getUndefinedStateErrorMessage(key, action)</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(errorMessage)</span><br><span class="line">    &#125;</span><br><span class="line">    nextState[key] = nextStateForKey</span><br><span class="line">    hasChanged = hasChanged || nextStateForKey !== previousStateForKey</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> hasChanged ? nextState : state</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>从上面的代码可以看出每个 reducer 会接受对应 key 的 state subtree(并不是整个state object)以及 action 对象作为入参，返回的结果最终组合成一个新的 state。</p>
-<p>另外, 返回的combination函数的签名和单个reducer是一样的，这样就可以嵌套的使用<code>combineReducers</code>， 比如:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> combinedReducer = combineReducers(&#123;</span><br><span class="line">  reducer1,</span><br><span class="line">  reducer2,</span><br><span class="line">  combineReducers(&#123;</span><br><span class="line">    reducer3,</span><br><span class="line">    reducer4</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<h3 id="bindActionCreators"><a href="#bindActionCreators" class="headerlink" title="bindActionCreators"></a><strong>bindActionCreators</strong></h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Turns an object whose values are action creators, into an object with the</span></span><br><span class="line"><span class="comment"> * same keys, but with every function wrapped into a `dispatch` call so they</span></span><br><span class="line"><span class="comment"> * may be invoked directly. This is just a convenience method, as you can call</span></span><br><span class="line"><span class="comment"> * `store.dispatch(MyActionCreators.doSomething())` yourself just fine.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * For convenience, you can also pass a single function as the first argument,</span></span><br><span class="line"><span class="comment"> * and get a function in return.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param &#123;Function|Object&#125; actionCreators An object whose values are action</span></span><br><span class="line"><span class="comment"> * creator functions. One handy way to obtain it is to use ES6 `import * as`</span></span><br><span class="line"><span class="comment"> * syntax. You may also pass a single function.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @param &#123;Function&#125; dispatch The `dispatch` function available on your Redux</span></span><br><span class="line"><span class="comment"> * store.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @returns &#123;Function|Object&#125; The object mimicking the original object, but with</span></span><br><span class="line"><span class="comment"> * every action creator wrapped into the `dispatch` call. If you passed a</span></span><br><span class="line"><span class="comment"> * function as `actionCreators`, the return value will also be a single</span></span><br><span class="line"><span class="comment"> * function.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">bindActionCreators</span>(<span class="params">actionCreators, dispatch</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>需要注意的几点</strong>:<br><code>For any unknown actions, you must return the current state. If the current state is undefined, you must return the initial state. The initial state may not be undefined. If you don&#39;t want to set a value for the reducer, you can use null instead of undefined</code></p>
-<h3 id="compose"><a href="#compose" class="headerlink" title="compose"></a><strong>compose</strong></h3><p><code>compose</code> 是一个工具函数，接受多个函数作为参数，返回一个组合后的函数。 compose(f, g, h) 会返回 (…args) =&gt; f(g(h(…args))).</p>
-<h3 id="applyMiddleware"><a href="#applyMiddleware" class="headerlink" title="applyMiddleware"></a><strong>applyMiddleware</strong></h3><p><code>applyMiddleware(...middlewares)</code> 函数返回一个store enhancer，可以作为 createStore 的第三个参数 </p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">applyMiddleware</span>(<span class="params">...middlewares</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="params">createStore</span> =&gt;</span> (...args) =&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> store = createStore(...args)</span><br><span class="line">    <span class="keyword">let</span> dispatch = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(</span><br><span class="line">        <span class="string">`Dispatching while constructing your middleware is not allowed. `</span> +</span><br><span class="line">          <span class="string">`Other middleware would not be applied to this dispatch.`</span></span><br><span class="line">      )</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">let</span> chain = []</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> middlewareAPI = &#123;</span><br><span class="line">      getState: store.getState,</span><br><span class="line">      dispatch: <span class="function">(<span class="params">...args</span>) =&gt;</span> dispatch(...args)</span><br><span class="line">    &#125;</span><br><span class="line">    chain = middlewares.map(<span class="function"><span class="params">middleware</span> =&gt;</span> middleware(middlewareAPI))</span><br><span class="line">    dispatch = compose(...chain)(store.dispatch)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      ...store,</span><br><span class="line">      dispatch</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>middleware 的函数签名为: <code>({ dispatch, getState }) =&gt; next =&gt; action =&gt; { return next(...) }</code>:</p>
-<p>middleware 先接受 { dispatch, getState } 对象做为入参，然后再通过 compose 函数接受 dispatch 作为入参，将之前 compose 的执行顺序又反了过来，middleware的执行顺序为从左往右，执行 next 函数其实是下一个 middleware。但最后一个 middleware 的 next 实际上是原始的 store.dispatch 函数。最终用 compose 的 dispatch 函数替换原先 createStore 返回的 dispatch。于是，新的 dispatch 就可以根据参数的类型来做处理，如果参数符合则进行逻辑处理，如果不符合则 <code>return next(arguments)</code> 来执行下一个 middleware 。</p>
-<p>比如 redux-thunk 这个middleware，源码如下:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createThunkMiddleware</span>(<span class="params">extraArgument</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function">(<span class="params">&#123; dispatch, getState &#125;</span>) =&gt;</span> next =&gt; <span class="function"><span class="params">action</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> action === <span class="string">'function'</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> action(dispatch, getState, extraArgument);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> next(action);</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> thunk = createThunkMiddleware();</span><br><span class="line">thunk.withExtraArgument = createThunkMiddleware;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> thunk;</span><br></pre></td></tr></table></figure>
-<p>可以看到 middleware 的签名确实是这样的。<br>另外需要注意，middleware 内部的 dispatch 函数其实也是 compose 后的 dispatch，并不是原始的 store.dispatch, 所以执行 dispatch 时会再次进入每个 middleware。比如 thunk，dispatch 一个 fetch 函数，在 fetch 执行获得 response 后，可以再次 dispatch 另一个 fetch：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">const</span> fetch1 = <span class="function">(<span class="params">dispatch</span>) =&gt;</span> fetch(&#123;<span class="attr">url</span>: url1&#125;).then(<span class="function"><span class="params">res</span> =&gt;</span> &#123;</span><br><span class="line">  dispatch(&#123;</span><br><span class="line">    type: <span class="string">'FETCH1'</span>, </span><br><span class="line">    payload: res</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fetch2 = <span class="function">(<span class="params">dispatch</span>) =&gt;</span> fetch(&#123;<span class="attr">url</span>: url2&#125;).then(<span class="function"><span class="params">res</span> =&gt;</span> &#123;</span><br><span class="line">  dispatch(fetch1) <span class="comment">// 再次进入 middleware</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> getFetchResp = <span class="function">(<span class="params">dispatch</span>) =&gt;</span> &#123;</span><br><span class="line">  dispatch(fetch2)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<h3 id="createStore"><a href="#createStore" class="headerlink" title="createStore"></a><strong>createStore</strong></h3>
+        
+          <p class="article-more-link">
+            <a href="/blog/2018/03/16/redux/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/16/redux/" data-id="cjeut3ei5000hel6r8bpl186q" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/16/redux/" data-id="cjewd8pq7000kg8emjmzx12gv" class="article-share-link">Compartir</a>
       
       
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react/">react</a></li></ul>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/redux/">redux</a></li></ul>
 
     </footer>
   </div>
@@ -172,7 +193,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cjeut3ehm0000el6r3w5ij4yk" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cjewd8ppw0004g8em2d66zjmx" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/web/">web</a></li></ul>
@@ -217,7 +238,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/" data-id="cjeut3ehv0004el6ru9y8hh92" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/" data-id="cjewd8ppr0001g8em96itf44t" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/chrome/">chrome</a></li></ul>
@@ -268,7 +289,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/25/wp-plugin/" data-id="cjeut3ei7000jel6r3ct9zglm" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/25/wp-plugin/" data-id="cjewd8pqr000zg8emr647qcpu" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
@@ -312,7 +333,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cjeut3ei9000mel6ra02e78ek" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cjewd8pqp000yg8emdjpnxm9w" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
@@ -357,7 +378,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cjeut3ehu0003el6rqnlmlhs6" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cjewd8ppn0000g8emba0e9m1g" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
@@ -401,7 +422,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/16/react-ssr/" data-id="cjeut3eib000oel6r84d7fnyx" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/16/react-ssr/" data-id="cjewd8pq6000hg8ems87n5gk5" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li></ul>
@@ -449,7 +470,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/03/preact-6/" data-id="cjeut3ei4000eel6ravvf528p" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/03/preact-6/" data-id="cjewd8pq3000fg8emouhno3kj" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -498,55 +519,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/29/preact-5/" data-id="cjeut3ei2000cel6rrofigbl2" class="article-share-link">Teilen</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-preact-4" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/blog/2018/01/28/preact-4/" class="article-date">
-  <time datetime="2018-01-28T10:00:18.000Z" itemprop="datePublished">2018-01-28</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/01/28/preact-4/">preact 源码(4)</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><strong>buildComponentFromVNode方法</strong></p>
-<p>这是上篇没有展开的一个方法。<br>preact 通过 <code>buildComponentFromVNode(dom, vnode, context, mountAll)</code> 进行 component diff。</p>
-<p>组件是 react/preact 的基本思想。所有的组件都会通过 <code>buildComponentFromVNode</code> 方法来初始化 dom 或者diff dom。 <code>buildComponentFromVNode</code> 方法决定了本次 diff 是重用已有的 component 还是新建 component。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">buildComponentFromVNode</span>(<span class="params">dom, vnode, context, mountAll</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>第一个参数 dom 是需要 diff 的 dom 节点。第二个参数是对应的 vnode。这里的 vnode.nodeName 为 component 的构造函数。</p>
-<p>方法首先通过 <code>vnode.attributes</code> 和 <code>vnode.nodeName.defaultProps</code> 获得 component 实例的 props 参数。<br>
-        
-          <p class="article-more-link">
-            <a href="/blog/2018/01/28/preact-4/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/01/28/preact-4/" data-id="cjeut3ei10009el6rc8qk6c2u" class="article-share-link">Teilen</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/01/29/preact-5/" data-id="cjewd8pq2000dg8em9my3v14k" class="article-share-link">Compartir</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li></ul>
@@ -562,7 +535,7 @@
 
   <nav id="page-nav">
     
-    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><a class="extend next" rel="next" href="/blog/page/2/">weiter &raquo;</a>
+    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><a class="extend next" rel="next" href="/blog/page/2/">Siguiente &raquo;</a>
   </nav>
 
 </section>
@@ -576,7 +549,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react/">react</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/web/">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redux/">redux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/web/">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
     </div>
   </div>
 
@@ -584,16 +557,16 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
+    <h3 class="widget-title">Nube de Tags</h3>
     <div class="widget tagcloud">
-      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react/" style="font-size: 10px;">react</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/web/" style="font-size: 10px;">web</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/redux/" style="font-size: 15px;">redux</a> <a href="/blog/tags/web/" style="font-size: 10px;">web</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
     </div>
   </div>
 
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archiv</h3>
+    <h3 class="widget-title">Archivos</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
@@ -603,9 +576,13 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">letzter Beitrag</h3>
+    <h3 class="widget-title">Posts recientes</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/blog/2018/03/18/react-redux/">react-redux 源码分析 [v5.0.7]</a>
+          </li>
         
           <li>
             <a href="/blog/2018/03/16/redux/">redux 源码分析【4.0.0-beta.2】</a>
@@ -623,10 +600,6 @@
             <a href="/blog/2018/02/25/wp-plugin/">写一个 webpack plugin</a>
           </li>
         
-          <li>
-            <a href="/blog/2018/02/24/wp-loader/">写一个 webpack loader</a>
-          </li>
-        
       </ul>
     </div>
   </div>
@@ -640,7 +613,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2018 Chris H Chen<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Construido por <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>react-redux 源码分析 [v5.0.7] | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="进入源码之前先看一下 npm script 里用于打包的几个命令：其中 umd 模块是用的 rollup 打包 ： build:umd:min 和 build:umd而 es 模块 和 commonjs 模块都是用的 babel直接打包: build:es 和 build:commonjs。 其中的 BABEL_ENV 环境变量会对应到 .babelrc 的 env 属性，对每个不同的 BABEL">
+<meta name="keywords" content="redux">
+<meta property="og:type" content="article">
+<meta property="og:title" content="react-redux 源码分析 [v5.0.7]">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/03/18/react-redux/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="进入源码之前先看一下 npm script 里用于打包的几个命令：其中 umd 模块是用的 rollup 打包 ： build:umd:min 和 build:umd而 es 模块 和 commonjs 模块都是用的 babel直接打包: build:es 和 build:commonjs。 其中的 BABEL_ENV 环境变量会对应到 .babelrc 的 env 属性，对每个不同的 BABEL">
+<meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2018-03-18T11:56:13.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="react-redux 源码分析 [v5.0.7]">
+<meta name="twitter:description" content="进入源码之前先看一下 npm script 里用于打包的几个命令：其中 umd 模块是用的 rollup 打包 ： build:umd:min 和 build:umd而 es 模块 和 commonjs 模块都是用的 babel直接打包: build:es 和 build:commonjs。 其中的 BABEL_ENV 环境变量会对应到 .babelrc 的 env 属性，对每个不同的 BABEL">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/blog/favicon.ico">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Buscar"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-react-redux" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/03/18/react-redux/" class="article-date">
+  <time datetime="2018-03-18T05:23:23.000Z" itemprop="datePublished">2018-03-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      react-redux 源码分析 [v5.0.7]
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>进入源码之前先看一下 npm script 里用于打包的几个命令：<br>其中 umd 模块是用的 rollup 打包 ： <code>build:umd:min</code> 和 <code>build:umd</code><br>而 es 模块 和 commonjs 模块都是用的 babel直接打包: <code>build:es</code> 和 <code>build:commonjs</code>。</p>
+<p>其中的 <code>BABEL_ENV</code> 环境变量会对应到 <code>.babelrc</code> 的 <code>env</code> 属性，对每个不同的 <code>BABEL_ENV</code> 会配置不同的 babel plugins。<br>当 <code>BABEL_ENV = rollup</code> 时，由于 rollup 用到了 <code>rollup-plugin-babel</code> 所以最终还是会定位到 <code>.babelrc</code>, 并且此时 <code>env=rollup</code>。</p>
+<p>打包的入口为 <code>src/index.js</code>, 它导出了一个对象：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> &#123; Provider, createProvider, connectAdvanced, connect &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Provider"><a href="#Provider" class="headerlink" title="Provider"></a><strong>Provider</strong></h3><a id="more"></a>
+<p>先看 <code>Provider</code> =&gt; <code>src/components/Provider.js</code>。</p>
+<p>Provider 利用 react 的 context api 是得传入的 store 对象能够被后代 children 获取到。</p>
+<p>context api 要实现 <code>getChildContext</code> 这个实例方法以及定义 <code>Provider.childContextTypes</code> 这个静态对象：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">getChildContext() &#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; [storeKey]: <span class="keyword">this</span>[storeKey], [subscriptionKey]: <span class="literal">null</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Provider.childContextTypes = &#123;</span><br><span class="line">    [storeKey]: storeShape.isRequired,</span><br><span class="line">    [subscriptionKey]: subscriptionShape,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可见传入的是 context 对象上有两个key： storeKey 和 subscriptionKey。 storeKey 默认值为 <code>&#39;store&#39;</code>, subscriptionKey 默认值为 <code>&#39;storeSubscription&#39;</code></p>
+<p>最后导出 Provider。</p>
+<h3 id="createProvider"><a href="#createProvider" class="headerlink" title="createProvider"></a><strong>createProvider</strong></h3><p><code>createProvider</code> 其实是提供了一个自定义 context 对象上 storeKey 和 subscriptionKey 的方法。只有在存在多个store时才会用到自定义 key，所以<code>createProvider</code> 函数是基本不会用到的。</p>
+<h3 id="connect、connectAdvanced"><a href="#connect、connectAdvanced" class="headerlink" title="connect、connectAdvanced"></a><strong>connect、connectAdvanced</strong></h3><p><code>connect</code> 函数接受 <code>mapStateToProps</code>, <code>mapDispatchToProps</code>, <code>mergeProps</code>, 以及一个 <a href="https://github.com/reactjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options" target="_blank" rel="noopener"><code>option</code></a>对象。</p>
+<p>最终通过各个 factory 函数将他们包装为可以被 selectorFactory 接受的函数。这里的每个 <code>factory</code> 函数主要做了一件事，就是判断 <code>mapStateToProps</code> 和 <code>mapDispatchToProps</code> 是否依赖第二个参数 <code>ownProps</code>。</p>
+<p>然后将参数传入 <code>connectAdvanced</code>。 <code>connectAdvanced</code> 接受 <code>selectorFactory</code> 和 <code>options</code> 最终返回一个 HOC。HOC 将接受 <code>WrappedComponent</code> 并返回最终包装后的 Component:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Connect</span> <span class="keyword">extends</span> <span class="title">Component</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  render() &#123;</span><br><span class="line">    <span class="keyword">const</span> selector = <span class="keyword">this</span>.selector</span><br><span class="line">    selector.shouldComponentUpdate = <span class="literal">false</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (selector.error) &#123;</span><br><span class="line">      <span class="keyword">throw</span> selector.error</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> createElement(WrappedComponent, <span class="keyword">this</span>.addExtraProps(selector.props))</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Connect</code> 通过 context 接受到传递下来的 store 对象。并且通过 <code>selectorFactory</code> 生成 <code>this.selector</code> 对象。</p>
+<p><code>this.selector</code> 对象负责 store 更新后生成新的 props, 并传递给 WrappedComponent。 同时 selectorFactory 用闭包缓存了上一次的 <code>store</code>, <code>stateProps</code>, <code>dispatchProps</code>, <code>ownProps</code>, 以及最终的<code>mergedProps</code>, 在 option.pure 的情况下，会通过 option 里的几个比较函数: <code>areStatesEqual</code>, <code>areOwnPropsEqual</code>, <code>areStatePropsEqual</code>, 来判断新旧状态是否有差别，进而判断是返回新对象还是旧对象。进而影响 <code>this.selector.shouldComponentUpdate</code> 的值。这样，当每次 store 更新时，并不是所有 connect 的 component 都会 re-render，只有 <code>mapStateToProps</code>, <code>mapDispatchToProps</code>, <code>mergeProps</code>，这几个函数的结果结合 <code>ownProps</code> 后通过 <code>selectorFactory</code> 的比较逻辑，确实发生变化的才会 re-render。</p>
+<p>另外，re-render 的逻辑如下:</p>
+<ol>
+<li>在 <code>componentDidMount</code> 执行 <code>this.subscription.trySubscribe()</code>, 通过<code>this.store.subscribe(this.onStateChange)</code> 注册 onStateChange 函数。并执行 <code>forceUpdate</code>。</li>
+<li>每次 <code>store</code> 变化后会自动执行 <code>onStateChange</code>函数。</li>
+<li><code>onStateChange</code> 内部执行 <code>this.selector.run(this.props)</code> 并通过<code>this.selector.shouldComponentUpdate</code>判断最终的 props 是不是变化了。</li>
+<li>如果有变化，则执行 <code>this.setState(dummyState)</code> 来进行 re-render。 其中 <code>const dummyState = {}</code>。 类似于<code>forceUpdate</code></li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/03/18/react-redux/" data-id="cjewd8pq0000bg8emjq9u1w1n" class="article-share-link">Compartir</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/redux/">redux</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/blog/2018/03/16/redux/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Viejo</strong>
+      <div class="article-nav-title">redux 源码分析【4.0.0-beta.2】</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redux/">redux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/web/">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Nube de Tags</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/redux/" style="font-size: 15px;">redux</a> <a href="/blog/tags/web/" style="font-size: 10px;">web</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archivos</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Posts recientes</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/03/18/react-redux/">react-redux 源码分析 [v5.0.7]</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/03/16/redux/">redux 源码分析【4.0.0-beta.2】</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/03/02/fastdom/">fastdom</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/26/chrome-launcher/">chrome-launcher</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/25/wp-plugin/">写一个 webpack plugin</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Construido por <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
