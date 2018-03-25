@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>mirror | </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Mirror 是一款简洁、高效、易上手的 React 框架。  doc-cn api-cn  通过文档可以感觉出 mirror 最主要是简化了 redux 概念中的 actionType, 框架会自动生成 actionType, 而使用者要做的只是调用 mirror 提供的 actions对象上相应的方法就可以。比如: actions.A.setAge(10)。 这样也同时简化了 thunk ,">
+<meta name="keywords" content="react">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mirror">
+<meta property="og:url" content="https://chrishchen.github.io/blog/2018/03/25/mirror/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="Mirror 是一款简洁、高效、易上手的 React 框架。  doc-cn api-cn  通过文档可以感觉出 mirror 最主要是简化了 redux 概念中的 actionType, 框架会自动生成 actionType, 而使用者要做的只是调用 mirror 提供的 actions对象上相应的方法就可以。比如: actions.A.setAge(10)。 这样也同时简化了 thunk ,">
+<meta property="og:locale" content="cn">
+<meta property="og:updated_time" content="2018-03-25T05:12:50.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="mirror">
+<meta name="twitter:description" content="Mirror 是一款简洁、高效、易上手的 React 框架。  doc-cn api-cn  通过文档可以感觉出 mirror 最主要是简化了 redux 概念中的 actionType, 框架会自动生成 actionType, 而使用者要做的只是调用 mirror 提供的 actions对象上相应的方法就可以。比如: actions.A.setAge(10)。 这样也同时简化了 thunk ,">
+  
+    <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/blog/favicon.ico">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/blog/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/blog/" id="logo"></a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/blog/">Home</a>
+        
+          <a class="main-nav-link" href="/blog/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-mirror" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/blog/2018/03/25/mirror/" class="article-date">
+  <time datetime="2018-03-25T02:09:30.000Z" itemprop="datePublished">2018-03-25</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      mirror
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="https://github.com/mirrorjs/mirror" target="_blank" rel="noopener">Mirror</a> 是一款简洁、高效、易上手的 React 框架。</p>
+<ul>
+<li><a href="https://github.com/mirrorjs/mirror/blob/master/README_zh.md" target="_blank" rel="noopener">doc-cn</a></li>
+<li><a href="https://github.com/mirrorjs/mirror/blob/master/docs/zh/api.md" target="_blank" rel="noopener">api-cn</a></li>
+</ul>
+<p>通过文档可以感觉出 mirror 最主要是简化了 redux 概念中的 actionType, 框架会自动生成 actionType, 而使用者要做的只是调用 mirror 提供的 <code>actions</code>对象上相应的方法就可以。比如: actions.A.setAge(10)。 这样也同时简化了 thunk ,  直接在 effects 中调用 <code>actions</code> 上的方法就可以了。</p>
+<p>下面简单的看下源码的实现过程：<br><a id="more"></a><br><strong>models</strong></p>
+<p>传入 model 的对象会进入 <code>addActions(m.name, m.reducers, m.effects)</code> 方法，将 <code>reducers</code> 放到 namespace 为 m.name 的全局 <code>actions</code> 对象上。<code>effects</code> 也会添加到一个全局的 effects 对象上，但这个对象不对外暴露:</p>
+<p><code>options.addEffect(</code>${modelName}${SEP}${effectName}<code>, effects[effectName])</code><br>后续会在 middleware 中调用这些方法。</p>
+<p><strong>actions</strong></p>
+<p><code>addActions</code> 最终通过 <code>actionCreator(modelName, effectName)</code> 方法来连接 dispatch 方法：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">actionCreator</span>(<span class="params">modelName, actionName</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="params">data</span> =&gt;</span> (</span><br><span class="line">    dispatch(&#123;</span><br><span class="line">      type: <span class="string">`<span class="subst">$&#123;modelName&#125;</span><span class="subst">$&#123;SEP&#125;</span><span class="subst">$&#123;actionName&#125;</span>`</span>,</span><br><span class="line">      data</span><br><span class="line">    &#125;)</span><br><span class="line">  )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可见，actions.modelName 对象上的方法只需要一个 payload 参数就可以了， type 默认都是 <code>${modelName}${SEP}${actionName}</code>, 其中 <code>SEP=&#39;/&#39;</code>。</p>
+<p><strong>store</strong></p>
+<p>store 注册了2个默认的 middleware:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> middleware = applyMiddleware(</span><br><span class="line">  routerMiddleware(),</span><br><span class="line">  ...middlewares,</span><br><span class="line">  createMiddleware()</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p><code>routerMiddleware</code> 处理更新 history location 的 api 方法(push, replace, go…), 这里集成了 <code>react-router-redux</code>。</p>
+<p><code>createMiddleware</code> 是 mirror 实现其逻辑的地方。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="function"><span class="keyword">function</span> <span class="title">createMiddleware</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="params">middlewareAPI</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">// 1.首先通过 redux middleware 的函数签名获得 `dispatch` 和 `getState` 这两个方法。</span></span><br><span class="line">    dispatch = middlewareAPI.dispatch</span><br><span class="line">    getState = middlewareAPI.getState</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="params">next</span> =&gt;</span> action =&gt; &#123;</span><br><span class="line">      <span class="comment">// 2.执行 dispatch: `let result = next(action)`。</span></span><br><span class="line">      <span class="keyword">let</span> result = next(action)</span><br><span class="line">      <span class="comment">// 3.如果是 effect 则执行 effect: </span></span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">typeof</span> effects[action.type] === <span class="string">'function'</span>) &#123;</span><br><span class="line">        result = effects[action.type](action.data, getState)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 4.执行 hooks</span></span><br><span class="line">      hooks.forEach(<span class="function"><span class="params">hook</span> =&gt;</span> hook(action, getState))</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> result</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>createMiddleware 具体做了什么可以看上面的注释。<br><strong>需要注意</strong>的是 effect 通常是异步的，所以这里的 actionType 如果是 effect 的话，hook 内部 getState 获得的还是旧的 state，并不是更新后的 state。</p>
+<p><strong>render</strong></p>
+<p><code>render</code> 方法和 <code>ReactDOM.render</code> 的区别在于先创建了 store 对象<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (started) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// If app has rendered, do `store.replaceReducer` to update store.</span></span><br><span class="line">  replaceReducer(store, models, reducers)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Call `render` without arguments means *re-render*. Since store has updated,</span></span><br><span class="line">  <span class="comment">// `component` will automatically be updated, so no need to `ReactDOM.render` again.</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">arguments</span>.length === <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> Root</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  createStore(models, reducers, initialState, middlewares)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>原理比较简单，就不多解释了。</p>
+<p><strong>router</strong></p>
+<p>最后剩下 router 对象。这个包装后的router主要做了两件事情：<br>1.将改变 location 的那些方法添加到 <code>actions.routing</code> 对象上。<br>2.创建 history。<br>3.关联 routing history 到 store（使用 <code>react-router-redux</code> 的 <code>ConnectedRouter</code> 组件 ）。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://chrishchen.github.io/blog/2018/03/25/mirror/" data-id="cjf6c5a5e0001ogemozanxtaf" class="article-share-link">Teilen</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react/">react</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/blog/2018/03/18/react-redux/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Älter</strong>
+      <div class="article-nav-title">react-redux 源码分析 [v5.0.7]</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/chrome/">chrome</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/preact-v8-2-7/">preact(v8.2.7)</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react/">react</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/react-ssr/">react ssr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/redux/">redux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/web/">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/webpack/">webpack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/blog/tags/chrome/" style="font-size: 10px;">chrome</a> <a href="/blog/tags/preact-v8-2-7/" style="font-size: 20px;">preact(v8.2.7)</a> <a href="/blog/tags/react/" style="font-size: 10px;">react</a> <a href="/blog/tags/react-ssr/" style="font-size: 10px;">react ssr</a> <a href="/blog/tags/redux/" style="font-size: 15px;">redux</a> <a href="/blog/tags/web/" style="font-size: 10px;">web</a> <a href="/blog/tags/webpack/" style="font-size: 15px;">webpack</a> <a href="/blog/tags/测试/" style="font-size: 10px;">测试</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archiv</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">letzter Beitrag</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/blog/2018/03/25/mirror/">mirror</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/03/18/react-redux/">react-redux 源码分析 [v5.0.7]</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/03/16/redux/">redux 源码分析【4.0.0-beta.2】</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/03/02/fastdom/">fastdom</a>
+          </li>
+        
+          <li>
+            <a href="/blog/2018/02/26/chrome-launcher/">chrome-launcher</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 Chris H Chen<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/blog/" class="mobile-nav-link">Home</a>
+  
+    <a href="/blog/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css">
+  <script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/blog/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
