@@ -51,7 +51,7 @@
         
           <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
@@ -76,7 +76,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/blog/2018/04/23/draft-plugin/">draft-plugin 源码</a>
+      <a class="article-title" href="/blog/2018/04/23/draft-plugin/">draft-js-plugin 源码</a>
     </h1>
   
 
@@ -85,36 +85,17 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p><a href="https://github.com/facebook/draft-js" target="_blank" rel="noopener">draft-js</a> 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(<a href="https://draftjs.org/" target="_blank" rel="noopener">文档</a>)</p>
-<p>draft 本身是通过改变 Editor 组件的 editorState 这个 prop 来渲染出每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，智能生成新的，不能修改)，来改变 Editor 的 editorState。也可以通过给 Editor 组件传入各种 prop 来改变他的默认行为，生成符合我们要求的 editorState。</p>
+<p>draft 通过改变 Editor 组件的 editorState prop 来渲染每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，只能生成新的，不能修改)，来改变 Editor 的 editorState。也可以通过给 Editor 组件传入各种 prop 来改变他的默认行为，生成符合我们要求的 editorState。</p>
 <p>而 <a href="https://github.com/draft-js-plugins/draft-js-plugins" target="_blank" rel="noopener">draft-js-plugins</a> 则提供了一种插件机制，将每种独立行为都做成一个插件，用配置插件的方式来灵活的生成符合需求的富文本编辑器。</p>
-<p>这里主要看下 draft-js-plugins 如何将插件化的配置植入到 draftjs内部的，所以不会涉及具体插件的实现。</p>
-<p><strong>draft-js-plugins-editor/src/index.js</strong></p>
-<p>这个文件导出了最终接受 plugins 的  <code>PluginEditor</code> 组件。</p>
-<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">render() &#123;</span><br><span class="line">  <span class="keyword">const</span> pluginHooks = <span class="keyword">this</span>.createPluginHooks();</span><br><span class="line">  <span class="keyword">const</span> customStyleMap = <span class="keyword">this</span>.resolveCustomStyleMap();</span><br><span class="line">  <span class="keyword">const</span> accessibilityProps = <span class="keyword">this</span>.resolveAccessibilityProps();</span><br><span class="line">  <span class="keyword">const</span> blockRenderMap = <span class="keyword">this</span>.resolveblockRenderMap();</span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    &lt;Editor</span><br><span class="line">      &#123;...this.props&#125;</span><br><span class="line">      &#123;...accessibilityProps&#125;</span><br><span class="line">      &#123;...pluginHooks&#125;</span><br><span class="line">      readOnly=&#123;<span class="keyword">this</span>.props.readOnly || <span class="keyword">this</span>.state.readOnly&#125;</span><br><span class="line">      customStyleMap=&#123;customStyleMap&#125;</span><br><span class="line">      blockRenderMap=&#123;blockRenderMap&#125;</span><br><span class="line">      onChange=&#123;<span class="keyword">this</span>.onChange&#125;</span><br><span class="line">      editorState=&#123;<span class="keyword">this</span>.props.editorState&#125;</span><br><span class="line">      ref=&#123;(element) =&gt; &#123; <span class="keyword">this</span>.editor = element; &#125;&#125;</span><br><span class="line">    /&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这里的 Editor 就是 Draft 的 Editor 组件。</p>
-<p>首先在构造函数中会依次调用每个 plugin 的 <code>initialize</code>方法，传入 <code>getPluginMethods</code>方法返回的对象以提供 plugin 初始化需要的一些参数。</p>
-<p>然后在 <code>componentWillMount</code> 中通过 <code>resolveDecorators</code> 函数剥离出 plugins 中的 decorators，通过 <code>EditorState.set</code> 静态方法返回带 decorator 的新 plugin，最后通过 <code>onChange</code> 方法设置新的 editorState。</p>
-<p><code>onChange</code> 方法会依次调用每个 plugin 的 <code>onChange</code> 方法，上个 plugin 的 onChange 方法返回的 editorState 作为下一个 plugin 的 onChange 入参。可以看出 plugin 如果有 onChange函数，则必须返回一个新的 editorState 类型的对象。</p>
-<p><code>resolveDecorators</code> 方法首先将直接作为 <code>decorators</code> prop 传入的 decorator 数组和作为 <code>plugins</code> prop 中的 decorators 属性间接传入的 decorator 数组合并(并做了数组扁平化处理)。 然后通过 <code>decoratorIsCustom</code> 过滤出不是非custom的decorator，因为非 custom 的 decorator 需要通过 <code>CompositeDecorator</code> 构造函数来生成 decorator 实例。 这个在 draftjs 的<a href="https://draftjs.org/docs/advanced-topics-decorators.html#content" target="_blank" rel="noopener">decorators文档</a>里有说明。然后将生成的 compositeDecorator 实例连同 custom decorator 一起，生成 <code>MultiDecorator</code> 的实例，作为最终的 decorator 实例返回。</p>
-<p>MultiDecorator 是实现了 <a href="https://github.com/facebook/draft-js/blob/master/src/model/decorators/DraftDecoratorType.js" target="_blank" rel="noopener">DraftDecoratorType</a> Flow type definition 的类。</p>
-<p><code>componentWillReceiveProps</code> 周期函数中的操作不太清楚原因…</p>
-<p><code>componentWillUnmount</code> 函数中会一次执行每个 plugin 的 <code>willUnmount</code> 函数。</p>
-<p><code>createPluginHooks</code> 函数会将 plugin 的属性分为三种：</p>
-<ul>
-<li>以 <code>on</code> 开头的事件型属性 (onChange除外)</li>
-<li>以 <code>handle</code> 开头的 handle 属性</li>
-<li>以 <code>Fn</code> 结尾的 Fn 属性</li>
-</ul>
-<p>对于事件型属性，通过 <code>createEventHooks</code> 函数返回处理句柄，句柄会依次执行 plugin 的对应事件句柄，直到某个句柄返回 true 为止。可以看出如果某个 plugin 想终止某事件被后续plugin的句柄执行，只需要让自身定义的句柄返回 true 即可。</p>
-<p>对于 handle 类型的属性，通过 <code>createHandleHooks</code> 返回最终处理函数，处理函数会依次执行 plugin 对应的 handle 函数，直到某个 handle 返回 ‘handled’ 字符串。name整个处理函数将返回 ‘handled’， 否则返回 ‘not-handled’。这里的应用类似于 draft 的 <code>handleKeyCommand</code> 这个 prop。(<a href="https://draftjs.org/docs/advanced-topics-key-bindings.html#content" target="_blank" rel="noopener">文档</a>)</p>
-<p>对于 Fn 类型的属性，通过 <code>createFnHooks</code> 函数处理后返回最终的处理函数。这里对 <code>blockRendererFn</code> 和 <code>blockStyleFn</code> 两种情况做了特殊的 merge 处理。其他的 fn 则会依次执行 plugin 对应的 fn ，直到某个 fn 返回值不为 undefined 为止，处理函数返回这个 fn 的返回值，否则返回 false。</p>
-<p>另外，对 <code>customStyleMap</code> 和 <code>blockRenderMap</code> 这两个prop 也做了依次 merge 每个 plugin 对应属性的操作。</p>
-<p>可见 PluginEditor 组件其实是对每个 plugin 里相同的属性分类，然后对这些属性做 <code>流式处理</code>。让每个 plugin 都依次处理前一个 plugin 返回的 editorState，最终返回处理完成后的新 editorState。</p>
-
+        
+          <p class="article-more-link">
+            <a href="/blog/2018/04/23/draft-plugin/#more">Read More</a>
+          </p>
+        
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/04/23/draft-plugin/" data-id="cjgcckp070001yw6rmy2q72lg" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/04/23/draft-plugin/" data-id="cjgcd0sz4000465emxnmifl87" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react/">react</a></li></ul>
@@ -152,7 +133,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/27/css-loader/" data-id="cjgcckp0s000dyw6rzxwty67l" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/27/css-loader/" data-id="cjgcd0syv000065emfb806epb" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
@@ -201,7 +182,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/25/mirror/" data-id="cjgcckp0r000cyw6rnpcba616" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/25/mirror/" data-id="cjgcd0sz6000865em5ifb4inz" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react/">react</a></li></ul>
@@ -248,7 +229,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/18/react-redux/" data-id="cjgcckp15000vyw6ry79thxsf" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/18/react-redux/" data-id="cjgcd0szh000m65emfxgfgv4a" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/redux/">redux</a></li></ul>
@@ -293,7 +274,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/16/redux/" data-id="cjgcckp16000xyw6rx9yp43hl" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/16/redux/" data-id="cjgcd0szk000q65emsge9ou2z" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/redux/">redux</a></li></ul>
@@ -344,7 +325,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cjgcckp0d0004yw6rkma5nle5" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/03/02/fastdom/" data-id="cjgcd0sz5000565ema9jptl4n" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/web/">web</a></li></ul>
@@ -389,7 +370,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/" data-id="cjgcckp0b0003yw6r42ufm5lw" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/26/chrome-launcher/" data-id="cjgcd0sz3000365emfwltq5rm" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/chrome/">chrome</a></li></ul>
@@ -440,7 +421,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/25/wp-plugin/" data-id="cjgcckp170010yw6r2f6wkxcq" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/25/wp-plugin/" data-id="cjgcd0szl000t65em829448zd" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
@@ -484,7 +465,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cjgcckp14000syw6r5t5xhkty" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/24/wp-loader/" data-id="cjgcd0szj000p65em5kqxw996" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/webpack/">webpack</a></li></ul>
@@ -529,7 +510,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cjgcckp030000yw6rpkcrkie6" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/02/23/benchmark/" data-id="cjgcd0syz000165em3bh9uug0" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/测试/">测试</a></li></ul>
@@ -545,7 +526,7 @@
 
   <nav id="page-nav">
     
-    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><a class="extend next" rel="next" href="/blog/page/2/">Next &raquo;</a>
+    <span class="page-number current">1</span><a class="page-number" href="/blog/page/2/">2</a><a class="extend next" rel="next" href="/blog/page/2/">weiter &raquo;</a>
   </nav>
 
 </section>
@@ -576,7 +557,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">Archiv</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
@@ -586,12 +567,12 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
         
           <li>
-            <a href="/blog/2018/04/23/draft-plugin/">draft-plugin 源码</a>
+            <a href="/blog/2018/04/23/draft-plugin/">draft-js-plugin 源码</a>
           </li>
         
           <li>

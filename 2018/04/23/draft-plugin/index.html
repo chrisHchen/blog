@@ -5,20 +5,20 @@
   
 
   
-  <title>draft-plugin 源码 | </title>
+  <title>draft-js-plugin 源码 | </title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="draft-js 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(文档) draft 本身是通过改变 Editor 组件的 editorState 这个 prop 来渲染出每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，智能生成新的，不能修">
+  <meta name="description" content="draft-js 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(文档) draft 通过改变 Editor 组件的 editorState prop 来渲染每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，只能生成新的，不能修改)，来改变">
 <meta name="keywords" content="react">
 <meta property="og:type" content="article">
-<meta property="og:title" content="draft-plugin 源码">
+<meta property="og:title" content="draft-js-plugin 源码">
 <meta property="og:url" content="https://chrishchen.github.io/blog/2018/04/23/draft-plugin/index.html">
 <meta property="og:site_name">
-<meta property="og:description" content="draft-js 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(文档) draft 本身是通过改变 Editor 组件的 editorState 这个 prop 来渲染出每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，智能生成新的，不能修">
+<meta property="og:description" content="draft-js 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(文档) draft 通过改变 Editor 组件的 editorState prop 来渲染每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，只能生成新的，不能修改)，来改变">
 <meta property="og:locale" content="cn">
-<meta property="og:updated_time" content="2018-04-23T14:37:48.000Z">
+<meta property="og:updated_time" content="2018-04-23T14:47:38.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="draft-plugin 源码">
-<meta name="twitter:description" content="draft-js 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(文档) draft 本身是通过改变 Editor 组件的 editorState 这个 prop 来渲染出每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，智能生成新的，不能修">
+<meta name="twitter:title" content="draft-js-plugin 源码">
+<meta name="twitter:description" content="draft-js 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(文档) draft 通过改变 Editor 组件的 editorState prop 来渲染每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，只能生成新的，不能修改)，来改变">
   
     <link rel="alternate" href="/blog/atom.xml" title="" type="application/atom+xml">
   
@@ -56,7 +56,7 @@
         
           <a id="nav-rss-link" class="nav-icon" href="/blog/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Suche"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://chrishchen.github.io/blog"></form>
@@ -79,7 +79,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      draft-plugin 源码
+      draft-js-plugin 源码
     </h1>
   
 
@@ -88,20 +88,21 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p><a href="https://github.com/facebook/draft-js" target="_blank" rel="noopener">draft-js</a> 是 facebook 推出的基于 React 和 immutable 数据模型的富文本编辑器构建框架。(<a href="https://draftjs.org/" target="_blank" rel="noopener">文档</a>)</p>
-<p>draft 本身是通过改变 Editor 组件的 editorState 这个 prop 来渲染出每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，智能生成新的，不能修改)，来改变 Editor 的 editorState。也可以通过给 Editor 组件传入各种 prop 来改变他的默认行为，生成符合我们要求的 editorState。</p>
+<p>draft 通过改变 Editor 组件的 editorState prop 来渲染每次内容改变的结果。我们可以在 onChange 事件内生成新的 editorState 对象(editorState 是 immutable 的，只能生成新的，不能修改)，来改变 Editor 的 editorState。也可以通过给 Editor 组件传入各种 prop 来改变他的默认行为，生成符合我们要求的 editorState。</p>
 <p>而 <a href="https://github.com/draft-js-plugins/draft-js-plugins" target="_blank" rel="noopener">draft-js-plugins</a> 则提供了一种插件机制，将每种独立行为都做成一个插件，用配置插件的方式来灵活的生成符合需求的富文本编辑器。</p>
-<p>这里主要看下 draft-js-plugins 如何将插件化的配置植入到 draftjs内部的，所以不会涉及具体插件的实现。</p>
+<a id="more"></a>
+<p>这里主要看下 draft-js-plugins 如何将插件化的配置植入到 draftjs 内部的，所以不会涉及具体插件的实现。</p>
 <p><strong>draft-js-plugins-editor/src/index.js</strong></p>
-<p>这个文件导出了最终接受 plugins 的  <code>PluginEditor</code> 组件。</p>
+<p>这个文件导出了最终接受 plugins prop 的 <code>PluginEditor</code> 组件。</p>
 <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">render() &#123;</span><br><span class="line">  <span class="keyword">const</span> pluginHooks = <span class="keyword">this</span>.createPluginHooks();</span><br><span class="line">  <span class="keyword">const</span> customStyleMap = <span class="keyword">this</span>.resolveCustomStyleMap();</span><br><span class="line">  <span class="keyword">const</span> accessibilityProps = <span class="keyword">this</span>.resolveAccessibilityProps();</span><br><span class="line">  <span class="keyword">const</span> blockRenderMap = <span class="keyword">this</span>.resolveblockRenderMap();</span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    &lt;Editor</span><br><span class="line">      &#123;...this.props&#125;</span><br><span class="line">      &#123;...accessibilityProps&#125;</span><br><span class="line">      &#123;...pluginHooks&#125;</span><br><span class="line">      readOnly=&#123;<span class="keyword">this</span>.props.readOnly || <span class="keyword">this</span>.state.readOnly&#125;</span><br><span class="line">      customStyleMap=&#123;customStyleMap&#125;</span><br><span class="line">      blockRenderMap=&#123;blockRenderMap&#125;</span><br><span class="line">      onChange=&#123;<span class="keyword">this</span>.onChange&#125;</span><br><span class="line">      editorState=&#123;<span class="keyword">this</span>.props.editorState&#125;</span><br><span class="line">      ref=&#123;(element) =&gt; &#123; <span class="keyword">this</span>.editor = element; &#125;&#125;</span><br><span class="line">    /&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这里的 Editor 就是 Draft 的 Editor 组件。</p>
 <p>首先在构造函数中会依次调用每个 plugin 的 <code>initialize</code>方法，传入 <code>getPluginMethods</code>方法返回的对象以提供 plugin 初始化需要的一些参数。</p>
 <p>然后在 <code>componentWillMount</code> 中通过 <code>resolveDecorators</code> 函数剥离出 plugins 中的 decorators，通过 <code>EditorState.set</code> 静态方法返回带 decorator 的新 plugin，最后通过 <code>onChange</code> 方法设置新的 editorState。</p>
-<p><code>onChange</code> 方法会依次调用每个 plugin 的 <code>onChange</code> 方法，上个 plugin 的 onChange 方法返回的 editorState 作为下一个 plugin 的 onChange 入参。可以看出 plugin 如果有 onChange函数，则必须返回一个新的 editorState 类型的对象。</p>
-<p><code>resolveDecorators</code> 方法首先将直接作为 <code>decorators</code> prop 传入的 decorator 数组和作为 <code>plugins</code> prop 中的 decorators 属性间接传入的 decorator 数组合并(并做了数组扁平化处理)。 然后通过 <code>decoratorIsCustom</code> 过滤出不是非custom的decorator，因为非 custom 的 decorator 需要通过 <code>CompositeDecorator</code> 构造函数来生成 decorator 实例。 这个在 draftjs 的<a href="https://draftjs.org/docs/advanced-topics-decorators.html#content" target="_blank" rel="noopener">decorators文档</a>里有说明。然后将生成的 compositeDecorator 实例连同 custom decorator 一起，生成 <code>MultiDecorator</code> 的实例，作为最终的 decorator 实例返回。</p>
+<p><code>onChange</code> 方法会依次调用每个 plugin 的 <code>onChange</code> 方法，上一个 plugin 的 onChange 方法返回的 editorState 将作为下一个 plugin 的 onChange 入参。可以看出 plugin 如果有 onChange函数，则必须返回一个新的 editorState 类型的对象。</p>
+<p><code>resolveDecorators</code> 方法首先将直接作为 <code>decorators</code> prop 传入的 decorator 数组和作为 <code>plugins</code> prop 中的 decorators 属性间接传入的 decorator 数组合并(并做了数组扁平化处理)。 然后通过 <code>decoratorIsCustom</code> 过滤出非custom的decorator，因为非 custom 的 decorator 需要通过 <code>CompositeDecorator</code> 构造函数来生成 decorator 实例。 这个在 draftjs 的<a href="https://draftjs.org/docs/advanced-topics-decorators.html#content" target="_blank" rel="noopener">decorators文档</a>里有说明。然后将生成的 compositeDecorator 实例连同 custom decorator 一起，生成 <code>MultiDecorator</code> 的实例，作为最终的 decorator 实例返回。</p>
 <p>MultiDecorator 是实现了 <a href="https://github.com/facebook/draft-js/blob/master/src/model/decorators/DraftDecoratorType.js" target="_blank" rel="noopener">DraftDecoratorType</a> Flow type definition 的类。</p>
 <p><code>componentWillReceiveProps</code> 周期函数中的操作不太清楚原因…</p>
-<p><code>componentWillUnmount</code> 函数中会一次执行每个 plugin 的 <code>willUnmount</code> 函数。</p>
+<p><code>componentWillUnmount</code> 函数中会依次执行每个 plugin 的 <code>willUnmount</code> 函数。</p>
 <p><code>createPluginHooks</code> 函数会将 plugin 的属性分为三种：</p>
 <ul>
 <li>以 <code>on</code> 开头的事件型属性 (onChange除外)</li>
@@ -109,15 +110,15 @@
 <li>以 <code>Fn</code> 结尾的 Fn 属性</li>
 </ul>
 <p>对于事件型属性，通过 <code>createEventHooks</code> 函数返回处理句柄，句柄会依次执行 plugin 的对应事件句柄，直到某个句柄返回 true 为止。可以看出如果某个 plugin 想终止某事件被后续plugin的句柄执行，只需要让自身定义的句柄返回 true 即可。</p>
-<p>对于 handle 类型的属性，通过 <code>createHandleHooks</code> 返回最终处理函数，处理函数会依次执行 plugin 对应的 handle 函数，直到某个 handle 返回 ‘handled’ 字符串。name整个处理函数将返回 ‘handled’， 否则返回 ‘not-handled’。这里的应用类似于 draft 的 <code>handleKeyCommand</code> 这个 prop。(<a href="https://draftjs.org/docs/advanced-topics-key-bindings.html#content" target="_blank" rel="noopener">文档</a>)</p>
+<p>对于 handle 类型的属性，通过 <code>createHandleHooks</code> 返回最终处理函数，处理函数会依次执行 plugin 对应的 handle 函数，直到某个 handle 返回 ‘handled’ 字符串。整个处理函数将返回 ‘handled’， 否则返回 ‘not-handled’。具体的应用可以参照 draft 的 <code>handleKeyCommand</code> prop。(<a href="https://draftjs.org/docs/advanced-topics-key-bindings.html#content" target="_blank" rel="noopener">文档</a>)</p>
 <p>对于 Fn 类型的属性，通过 <code>createFnHooks</code> 函数处理后返回最终的处理函数。这里对 <code>blockRendererFn</code> 和 <code>blockStyleFn</code> 两种情况做了特殊的 merge 处理。其他的 fn 则会依次执行 plugin 对应的 fn ，直到某个 fn 返回值不为 undefined 为止，处理函数返回这个 fn 的返回值，否则返回 false。</p>
 <p>另外，对 <code>customStyleMap</code> 和 <code>blockRenderMap</code> 这两个prop 也做了依次 merge 每个 plugin 对应属性的操作。</p>
-<p>可见 PluginEditor 组件其实是对每个 plugin 里相同的属性分类，然后对这些属性做 <code>流式处理</code>。让每个 plugin 都依次处理前一个 plugin 返回的 editorState，最终返回处理完成后的新 editorState。</p>
+<p>可见 PluginEditor 组件其实是对每个 plugin 里相同的属性分类，然后对这些属性做 <code>流式处理</code>。让每个 plugin 都依次处理前一个 plugin 返回的 editorState，最终返回处理后新的 editorState。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://chrishchen.github.io/blog/2018/04/23/draft-plugin/" data-id="cjgcckp070001yw6rmy2q72lg" class="article-share-link">Share</a>
+      <a data-url="https://chrishchen.github.io/blog/2018/04/23/draft-plugin/" data-id="cjgcd0sz4000465emxnmifl87" class="article-share-link">Teilen</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/blog/tags/react/">react</a></li></ul>
@@ -130,7 +131,7 @@
   
   
     <a href="/blog/2018/03/27/css-loader/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
+      <strong class="article-nav-caption">Älter</strong>
       <div class="article-nav-title">css-loader 源码【0.28.11】</div>
     </a>
   
@@ -167,7 +168,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
+    <h3 class="widget-title">Archiv</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/blog/archives/2018/01/">January 2018</a></li></ul>
     </div>
@@ -177,12 +178,12 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">letzter Beitrag</h3>
     <div class="widget">
       <ul>
         
           <li>
-            <a href="/blog/2018/04/23/draft-plugin/">draft-plugin 源码</a>
+            <a href="/blog/2018/04/23/draft-plugin/">draft-js-plugin 源码</a>
           </li>
         
           <li>
